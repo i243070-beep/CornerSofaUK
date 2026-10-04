@@ -30,9 +30,8 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
     return product ? NextResponse.json({ success: true, product })
       : NextResponse.json({ error: 'Product not found' }, { status: 404 });
   } catch (error) {
-    if (error instanceof ProductValidationError || error instanceof SyntaxError) {
-      return NextResponse.json({ error: error instanceof SyntaxError ? 'Invalid product details.' : error.message }, { status: 400 });
-    }
+    if (error instanceof SyntaxError) return NextResponse.json({ error: 'Invalid product details.' }, { status: 400 });
+    if (error instanceof ProductValidationError) return NextResponse.json({ error: error.message }, { status: 400 });
     console.error('Error updating product:', error);
     return NextResponse.json({ error: 'Could not save product. If using PostgreSQL, check that the product colours migration has been applied.' }, { status: 500 });
   }

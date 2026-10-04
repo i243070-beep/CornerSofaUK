@@ -5,8 +5,8 @@
     "frontend"
   ],
   "scripts": {
-    "vercel-build": "npm --workspace frontend run build",
-    "build": "npm --workspace frontend run build",
+    "vercel-build": "node scripts/vercel-build.mjs",
+    "build": "node scripts/vercel-build.mjs",
     "start": "npm --workspace frontend run start"
   },
   "dependencies": {
