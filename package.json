@@ -8,5 +8,10 @@
     "vercel-build": "npm --workspace frontend run build",
     "build": "npm --workspace frontend run build",
     "start": "npm --workspace frontend run start"
+  },
+  "dependencies": {
+    "next": "^15.5.25",
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
   }
 }
