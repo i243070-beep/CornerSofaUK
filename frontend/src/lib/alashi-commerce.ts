@@ -14,7 +14,7 @@ export function readAlashi<T>(token:unknown):T|undefined {
 export type Offer = {type:'offer';productId:string;variantId:string;price:number;cataloguePrice:number;expires?:number};
 export type Conversation = {type:'conversation';selected:string[];shown:string[];offers:Record<string,number>;query:string;stage?:'browsing'|'summary'|'checkout';turn?:number;lastAnswer?:string;colour?:string;imageHash?:string};
 export function quoteProduct(product:StoreProduct,data:AlashiRecord[],previous?:number,negotiate=false,colour='') {
-  const variant=product.variants.find(v=>colour && v.color.toLowerCase()===colour.toLowerCase()&&v.stock>0)||getDefaultVariant(product.variants);
+  const variant=product.variants.find(v=>colour && v.color.toLowerCase()===colour.toLowerCase())||getDefaultVariant(product.variants);
   const cataloguePrice=Number(variant?.price || getProductPrice(product));
   const range=priceRange(data,product.id,product.category);
   const normal=range?Math.min(range.max,Math.max(range.min,cataloguePrice)):cataloguePrice;
@@ -22,7 +22,7 @@ export function quoteProduct(product:StoreProduct,data:AlashiRecord[],previous?:
   const prior=typeof previous==='number'?Math.max(minimum,Math.min(normal,previous)):normal;
   const price=negotiate && range?.floor!==undefined ? (prior-minimum <= Math.max(1,(normal-minimum)/4) ? minimum : Math.round((prior+minimum)*50)/100) : prior;
   const offer:Offer={type:'offer',productId:product.id,variantId:variant?.id||'',price,cataloguePrice};
-  return {price,variant,range:range?{min:range.min,max:range.max}:{min:cataloguePrice,max:cataloguePrice},offerToken:variant&&variant.stock>0?signAlashi(offer):undefined};
+  return {price,variant,range:range?{min:range.min,max:range.max}:{min:cataloguePrice,max:cataloguePrice},offerToken:variant?signAlashi(offer):undefined};
 }
 export function validOffer(token:unknown,product:StoreProduct,variantId:string,data:AlashiRecord[]):number|undefined {
   const offer=readAlashi<Offer>(token);const variant=product.variants.find(v=>v.id===variantId);
@@ -33,11 +33,20 @@ export function validOffer(token:unknown,product:StoreProduct,variantId:string,d
   return Number.isFinite(offer.price)&&offer.price>=minimum&&offer.price<=maximum?offer.price:undefined;
 }
 export function normalizePostcode(value:string){return value.toUpperCase().replace(/\s+/g,'').trim();}
+export const DEFAULT_DELIVERY_ZONES: DeliveryZone[] = [
+  ...['DT','EX','FK','KA','KY','PL','TA','TQ','TR'].map(postcode => ({postcode,charge:50})),
+  ...['DD','PA'].map(postcode => ({postcode,charge:80})),
+  ...['AB','PH','PA1'].map(postcode => ({postcode,charge:150})),
+  ...['IV','OR','BT'].map(postcode => ({postcode,charge:200})),
+];
 export function deliveryCharge(data:AlashiRecord[],postcode:string):number|undefined {
   const code=normalizePostcode(postcode);
-  if(!/^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/.test(code))return;
+  if(!/^(?:GIR0AA|[A-PR-UWYZ][A-HK-Y]?\d[A-Z\d]?\d[ABD-HJLNP-UW-Z]{2})$/.test(code))return;
   const outward=code.slice(0,-3);
-  const zones=data.filter(r=>r.kind==='delivery').map(r=>r.value as DeliveryZone).sort((a,b)=>b.postcode.length-a.postcode.length);
-  return zones.find(z=>normalizePostcode(z.postcode)===code||normalizePostcode(z.postcode)===outward)?.charge;
+  const configured=new Map<string,number>();
+  for(const zone of DEFAULT_DELIVERY_ZONES){const key=normalizePostcode(zone.postcode);configured.set(key,Math.max(configured.get(key)||0,zone.charge));}
+  for(const record of data.filter(r=>r.kind==='delivery')){const zone=record.value as DeliveryZone;configured.set(normalizePostcode(zone.postcode),zone.charge);}
+  const matching=[...configured].filter(([zone])=>zone&&(code===zone||outward===zone||outward.startsWith(zone))).sort((a,b)=>b[0].length-a[0].length);
+  return matching[0]?.[1] ?? 0;
 }
-export const ASSEMBLY_FEE=20;
+export { ASSEMBLY_FEE } from './delivery-preferences';

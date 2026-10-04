@@ -7,14 +7,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight, Heart, Layers3, Phone, Search, Sofa, Truck, X } from 'lucide-react';
 import MiniCart from './MiniCart';
 import MobileMenu from './MobileMenu';
-
-const NAV_LINKS = [
-  { href: '/products', label: 'All sofas' },
-  { href: '/products?category=2-Seater', label: '2 seaters' },
-  { href: '/products?category=3-Seater', label: '3 seaters' },
-  { href: '/products?category=Corner', label: 'Corner & U-shape' },
-  { href: '/products?category=Recliner', label: 'Recliners' },
-];
+import ProductNavigation from './ProductNavigation';
 
 export default function SiteHeader({ catalogue = false }: { catalogue?: boolean }) {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -40,12 +33,12 @@ export default function SiteHeader({ catalogue = false }: { catalogue?: boolean 
   }, [searchOpen]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[#28352c]/10 bg-[#faf9f6]/90 text-[#28352c] backdrop-blur-2xl">
+    <header className="site-header sticky top-0 z-50 border-b border-[#28352c]/10 bg-[#faf9f6]/90 text-[#28352c] backdrop-blur-2xl">
       <div className="border-b border-white/10 bg-[#344536] text-[#f7f7ef]">
         <div className="mx-auto flex min-h-[42px] max-w-[1500px] items-center justify-center gap-4 px-5 py-1.5 text-[11px] tracking-[0.025em] sm:justify-between sm:px-8 lg:px-12">
           <a href="tel:+447456439050" className="hidden shrink-0 items-center gap-2 text-white/90 sm:flex"><Phone size={14} strokeWidth={1.5} />+44 7456 439050</a>
           <p className="text-center font-medium">Handmade in Britain · Free UK delivery</p>
-          <div className="hidden shrink-0 items-center gap-4 lg:flex"><Link href="/delivery-info" className="inline-flex items-center gap-1.5 hover:text-white"><Truck size={14} />Delivery</Link><Link href="/reviews" className="inline-flex items-center gap-1.5 hover:text-white"><Heart size={14} />Feedback</Link></div>
+          <div className="hidden shrink-0 items-center gap-4 lg:flex"><Link href="/my-orders" className="inline-flex items-center gap-1.5 hover:text-white"><Truck size={14} />My orders</Link><Link href="/reviews" className="inline-flex items-center gap-1.5 hover:text-white"><Heart size={14} />Feedback</Link></div>
         </div>
       </div>
       <div className="mx-auto flex h-[76px] max-w-[1500px] items-center justify-between gap-2 px-4 sm:gap-3 sm:px-8 lg:h-[84px] lg:px-12">
@@ -59,13 +52,7 @@ export default function SiteHeader({ catalogue = false }: { catalogue?: boolean 
           </span>
         </Link>
         <div className="flex min-w-0 flex-1 items-center justify-end gap-3 lg:justify-center">
-          <nav aria-label="Main navigation" className="hidden items-center gap-2 lg:flex">
-            {NAV_LINKS.map((link) => (
-              <Link key={link.label} href={link.href} aria-current={link.href === pathname ? 'page' : undefined} className="inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-full border border-[#d6ddcc] bg-[#edf1e6]/80 px-4 text-xs font-medium text-[#344536] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] transition-colors duration-200 hover:border-[#aeba9b] hover:bg-[#dfe8d3] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#526449] motion-reduce:transition-none">
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+          <ProductNavigation />
         </div>
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           <Link href="/room-planner/" aria-label="Plan my room" className="hidden h-11 items-center gap-2 rounded-full border border-[#d6ddcc] bg-white/70 px-3 text-xs font-medium transition-colors hover:bg-[#e9ece4] xl:flex"><Layers3 size={18} />Plan room</Link>

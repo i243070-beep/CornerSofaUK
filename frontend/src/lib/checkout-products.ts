@@ -2,6 +2,8 @@ import { findProduct } from './product-store';
 import { getVariantImages, type StoreProduct } from './product-options';
 import { validOffer } from './alashi-commerce';
 import { records } from './alashi-store';
+import { configurationIdentity, getBuild, serverPrice } from './sofa-builder/server';
+import type { BuildSnapshot } from './sofa-builder/types';
 
 export class CheckoutValidationError extends Error {
   constructor(message: string) {
@@ -20,6 +22,7 @@ export interface ValidatedCheckoutItem {
   quantity: number;
   image: string;
   itemType?: 'sofa' | 'swatch';
+  buildSnapshot?: BuildSnapshot;
 }
 
 function fail(message: string): never {
@@ -56,13 +59,20 @@ export async function validateCheckoutItems(input: unknown): Promise<ValidatedCh
 
     const productId = item.productId;
     const variantId = item.variantId;
-    if (item.itemType === 'swatch') {
-      if (item.quantity !== 1) return fail('You can add only one fabric swatch to an order.');
+    if (item.itemType === 'swatch') return fail('Fabric is a sofa choice. Remove the old separate swatch and choose your fabric through the sofa builder.');
+    hasSofa = true;
+    if (item.buildId || variantId.startsWith('build:')) {
+      if (typeof item.buildId !== 'string') return fail('Your custom sofa reference is missing. Reopen the builder.');
+      const build = await getBuild(item.buildId);
+      if (!build || !['fixed','estimate'].includes(build.price.status) || productId !== build.selection.productId || variantId !== `build:${configurationIdentity(build.selection)}`) return fail('This configuration needs a quotation or a new price check. Reopen the builder.');
+      const fresh = await serverPrice(build.selection);
+      if (fresh.price.errors.length || fresh.price.status === 'quote_required' || fresh.price.merchandisePence !== build.price.merchandisePence || fresh.price.specification.join('\n') !== build.price.specification.join('\n') || pennies(item.price) !== fresh.price.merchandisePence) return fail('The custom sofa price or specification changed. Edit your build and review it before checkout.');
       const key = JSON.stringify([productId, variantId]);
-      validated.set(key, { productId, variantId, title: typeof item.title === 'string' ? item.title : 'Fabric swatch', color: typeof item.color === 'string' ? item.color : 'Selected swatch', range_type: 'Fabric swatch', price: 0, quantity: 1, image: typeof item.image === 'string' ? item.image : '/placeholder.svg', itemType: 'swatch' });
+      const quantity = (validated.get(key)?.quantity || 0) + item.quantity;
+      if (quantity > 10) return fail('You can order up to 10 of each custom configuration.');
+      validated.set(key, { productId, variantId, title: build.price.title, color: fresh.price.specification.find(line => line.startsWith('Fabric / colour:')) || 'Selected finish', range_type: 'Personalised sofa', price: fresh.price.merchandisePence / 100, quantity, image: build.price.image, itemType: 'sofa', buildSnapshot: build });
       continue;
     }
-    hasSofa = true;
     if (!products.has(productId)) products.set(productId, findProduct(productId));
     // Store failures must fail checkout; client prices are never a fallback.
     const product = await products.get(productId);
@@ -76,16 +86,9 @@ export async function validateCheckoutItems(input: unknown): Promise<ValidatedCh
     if (currentPennies === undefined || pennies(item.price) !== currentPennies) {
       return fail(`The price of ${product.title} has changed. Please refresh your basket and add this sofa again to use its current price.`);
     }
-    if (!Number.isInteger(variant.stock) || variant.stock < 1) {
-      return fail(`${product.title} in ${variant.color} is sold out. Please refresh your basket and choose another colour.`);
-    }
-
     const key = JSON.stringify([productId, variantId]);
     const quantity = (validated.get(key)?.quantity || 0) + item.quantity;
     if (quantity > 10) return fail(`You can order up to 10 of ${product.title} in ${variant.color}. Please update your basket quantity.`);
-    if (quantity > variant.stock) {
-      return fail(`Only ${variant.stock} of ${product.title} in ${variant.color} are available. Please refresh your basket and reduce the quantity.`);
-    }
     validated.set(key, {
       productId: product.id,
       variantId: variant.id,

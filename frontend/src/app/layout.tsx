@@ -1,5 +1,7 @@
 ﻿import '../../styles/globals.css';
 import { CartProvider } from '@/context/CartContext';
+import '../../styles/storefront-responsive.css';
+import '../../styles/home-refresh.css';
 import SiteHeader from '@/components/SiteHeader';
 import SiteFooter from '@/components/SiteFooter';
 import BackToTop from '@/components/BackToTop';
@@ -67,15 +69,15 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const orgSchema = generateOrganizationSchema();
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head><script dangerouslySetInnerHTML={{__html:"try{document.documentElement.dataset.theme=localStorage.getItem('sofa-theme')==='dark'?'dark':'light'}catch(e){document.documentElement.dataset.theme='light'}"}}/><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }} /></head>
+    <html lang="en" data-theme="dark" suppressHydrationWarning>
+      <head><script dangerouslySetInnerHTML={{__html:"try{document.documentElement.dataset.theme=localStorage.getItem('sofa-theme')==='light'?'light':'dark'}catch(e){document.documentElement.dataset.theme='dark'}"}}/><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }} /></head>
       <body className="bg-primary text-dark font-sans flex flex-col min-h-screen">
         <CartProvider>
           <ReviewsProvider>
           <Analytics />
           <ThemeToggle />
           <a href="#main-content" className="skip-link">Skip to content</a>
-          <StorefrontOnly hideOnHome hideOn={['/about', '/contact', '/reviews', '/products']}><SiteHeader /><RoomPlannerLink /></StorefrontOnly>
+          <StorefrontOnly hideOnHome hideOn={['/about', '/contact', '/reviews', '/products', '/build']}><SiteHeader /><RoomPlannerLink /></StorefrontOnly>
           <main id="main-content" tabIndex={-1} className="flex-grow">{children}</main>
           <StorefrontOnly><AlashiChat /></StorefrontOnly>
           <StorefrontOnly hideOn={['/about', '/contact', '/reviews']}><SiteFooter /><BackToTop /></StorefrontOnly>

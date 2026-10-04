@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, ArrowUpRight, Heart, Search, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUpRight, Heart, Search, X, Sofa, Gem, Leaf } from 'lucide-react';
 import MiniCart from '@/components/MiniCart';
+import SiteFooter from '@/components/SiteFooter';
 import styles from './about.module.css';
 
 const collections = [
@@ -84,28 +85,21 @@ export default function AboutExperience() {
         <img src="/images/about/upholstery-detail.webp" alt="Close-up of warm brown and charcoal sofa upholstery in natural light" width={1800} height={1200} fetchPriority="high" className={styles.heroImage} />
         <div className={styles.heroShade} />
         <div className={styles.heroCopy}>
+          <p className={styles.eyebrow}>Comfort &middot; Considered design &middot; Corner Sofa</p>
           <h1 id="about-title">Timeless comfort.<br />Crafted for living.</h1>
-          <p>Considered sofas for everyday life.<br />UK based. Delivered to your door.</p>
-          <a href="#our-story" className={styles.heroLink}>Discover Corner Sofa <ArrowRight size={17} strokeWidth={1.2} aria-hidden="true" /></a>
+          <div className={styles.heroStory}>
+            <h2>Our story</h2>
+            <p className={styles.heroIntro}>We're based in the UK, bringing thoughtful sofa design into everyday homes. A place to slow down. A little more room to live.</p>
+            <p className={styles.heroDetail}>From a quiet moment on your own to a house full of people, the right sofa makes room for it all. Explore soft textures, considered shapes, and comfort that feels like you.</p>
+            <a href="#about-collections" className={styles.heroLink}>Discover Corner Sofa <ArrowRight size={17} strokeWidth={1.2} aria-hidden="true" /></a>
+          </div>
         </div>
       </section>
-
-      <section id="our-story" className={styles.story} aria-labelledby="story-title">
-      <div className={styles.ribbon} aria-hidden="true">
-        <span>COMFORT</span><i>0</i><span>CONSIDERED DESIGN</span><i>0</i><span>CORNER SOFA</span>
+      <div className={styles.valuesStrip} aria-label="Our values">
+        {[{ Icon: Leaf, title: 'Comfort', detail: 'Made for real life' }, { Icon: Gem, title: 'Considered design', detail: 'Thoughtful in every detail' }, { Icon: Sofa, title: 'Corner Sofa', detail: 'More space. More together.' }].map(({ Icon, title, detail }) => <div key={title}><Icon size={26} strokeWidth={1.2} aria-hidden="true" /><span><strong>{title}</strong><small>{detail}</small></span></div>)}
       </div>
 
-        <div className={styles.storyTop}>
-          <h2 id="story-title" className={styles.storyLabel}>Our story</h2>
-          <p className={styles.storyIntro}>We’re based in the UK, bringing thoughtful sofa design into everyday homes. A place to slow down. A little more room to live.</p>
-        </div>
-        <div className={styles.storyDetails}>
-          <p>From a quiet moment on your own to a house full of people, the right sofa makes room for it all. Explore soft textures, considered shapes, and comfort that feels like you.</p>
-          <Link href="/products" className={styles.textLink}>Find your sofa <ArrowUpRight size={17} strokeWidth={1.3} aria-hidden="true" /></Link>
-        </div>
-      </section>
-
-      <section className={styles.collectionSection} aria-labelledby="collection-title">
+      <section id="about-collections" className={styles.collectionSection} aria-labelledby="collection-title">
         <div className={styles.collectionHeading}>
           <h2 id="collection-title">Only the essential.<br />Always the exceptional.</h2>
           <i aria-hidden="true">0</i>
@@ -163,18 +157,7 @@ export default function AboutExperience() {
         </div>
       </section>
 
-      <footer className={styles.footer}>
-        <div className={styles.footerTop}>
-          <h2>Make room<br />for your everyday.</h2>
-          <div><Link href="/products" className={styles.textLink}>Explore the collection <ArrowUpRight size={19} strokeWidth={1.2} aria-hidden="true" /></Link><Link href="/room-planner/" className={styles.textLink}>Plan your room <ArrowUpRight size={19} strokeWidth={1.2} aria-hidden="true" /></Link></div>
-        </div>
-        <div className={styles.footerMiddle}>
-          <Link href="/" aria-label="Corner Sofa home"><Wordmark /></Link>
-          <p>UK based.<br />Free UK delivery. Cash on delivery.</p>
-          <div><a href="tel:+447456439050">+44 7456 439050</a><Link href="/contact">Get in touch <ArrowUpRight size={14} aria-hidden="true" /></Link></div>
-        </div>
-        <div className={styles.footerBottom}><p>© {new Date().getFullYear()} Corner Sofa</p><nav aria-label="About page footer"><Link href="/delivery-info">Delivery</Link><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link></nav><a href="#main-content">Back to top ↑</a></div>
-      </footer>
+      <SiteFooter />
 
       <dialog ref={menuRef} id="about-navigation" className={styles.menuDialog} aria-label="Navigation menu" onClose={() => { setDialogOpen(null); menuTriggerRef.current?.focus(); }}>
         <div className={styles.dialogTop}><Link href="/" aria-label="Corner Sofa home" onClick={() => menuRef.current?.close()}><Wordmark /></Link><button type="button" autoFocus onClick={() => menuRef.current?.close()} aria-label="Close navigation menu"><X size={26} strokeWidth={1.1} aria-hidden="true" /></button></div>

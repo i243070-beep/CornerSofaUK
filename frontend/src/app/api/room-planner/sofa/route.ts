@@ -3,6 +3,7 @@ import { findProduct } from '@/lib/product-store';
 import { getColourHex } from '@/lib/product-options';
 import { isSofaPreviewUrl } from '@/lib/sofa-preview';
 import { generateSofaCutout } from '@/lib/sofa-preview-renderer';
+import { originalProductImage } from '@/lib/product-room-images';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -16,8 +17,8 @@ export async function GET(request: NextRequest) {
     const product = await findProduct(productId);
     const variant = product?.variants.find(v => v.id === variantId);
     if (!product || !variant) return NextResponse.json({ error: 'This sofa or colour is no longer available.' }, { status: 404 });
-    const variantPhoto = variant.images?.[0];
-    const source = variantPhoto && !isSofaPreviewUrl(variantPhoto) ? variantPhoto : product.images?.[0];
+    const variantPhoto = variant.images?.[0] && originalProductImage(variant.images[0]);
+    const source = variantPhoto && !isSofaPreviewUrl(variantPhoto) ? variantPhoto : product.images?.[0] && originalProductImage(product.images[0]);
     if (!source || isSofaPreviewUrl(source)) return NextResponse.json({ error: 'This sofa needs an original catalogue photo for room previews.' }, { status: 422 });
     const png = await generateSofaCutout(source, isSofaPreviewUrl(variantPhoto || '') ? getColourHex(variant) : undefined);
     return new Response(new Uint8Array(png), { headers: { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=300', 'X-Content-Type-Options': 'nosniff' } });

@@ -8,6 +8,10 @@ create table products (
   compare_at_price decimal(10,2),
   images text[] not null default '{}',
   category text,
+  status text not null default 'published' check (status in ('published', 'draft')),
+  categories text[] not null default '{}',
+  review_flags text[] not null default '{}',
+  stock_confirmation_required boolean not null default false,
   created_at timestamp with time zone default now()
 );
 

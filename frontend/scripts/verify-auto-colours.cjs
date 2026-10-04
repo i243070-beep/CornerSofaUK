@@ -157,7 +157,8 @@ async function main() {
     shop = await context.newPage();
     await shop.goto(`${origin}/products`, { waitUntil: 'networkidle' });
     const card = shop.getByRole('article', { name: title, exact: true });
-    await card.getByRole('button', { name: `More colours for ${title}`, exact: true }).click();
+    const moreColours = card.getByRole('button', { name: `More colours for ${title}`, exact: true });
+    if (await moreColours.count()) await moreColours.click();
     await card.getByRole('button', { name: 'Blue', exact: true }).click();
     await expectPhoto(card.locator('img'), blueUrl);
     await expect(card.getByText('Save £590.99', { exact: true })).toBeVisible();

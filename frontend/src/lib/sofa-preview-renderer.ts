@@ -111,11 +111,13 @@ async function sofaMask(rgb: Buffer, width: number, height: number, key: string)
   return job;
 }
 
-export async function generateSofaPreview(source: string, colour: string): Promise<string> {
+export async function generateSofaPreview(source: string, colour: string, theme = ''): Promise<string> {
   if (!/^#[0-9a-f]{6}$/i.test(colour)) throw new Error('Select a valid sofa colour.');
   const sourceBytes = await readSofaImage(source);
   const sourceKey = hash(Buffer.concat([Buffer.from(VERSION), sourceBytes]));
-  const outputKey = hash(`${sourceKey}:${colour.toLowerCase()}`);
+  if (theme && !/^bg-[\w-]+\.(png|webp|jpg)$/i.test(theme)) throw new Error('Choose an existing room theme.');
+  const themeBytes = theme ? await readFile(path.resolve(process.cwd(), '..', 'backgrounds', theme)) : undefined;
+  const outputKey = hash(`${sourceKey}:${colour.toLowerCase()}:${themeBytes ? hash(themeBytes) : ''}`);
   const url = `/api/sofa-previews/${outputKey}.webp`;
   const output = path.join(storage(), `${outputKey}.webp`);
   try { await readFile(output); return url; }
@@ -127,7 +129,14 @@ export async function generateSofaPreview(source: string, colour: string): Promi
     const { data, info } = await sharp(sourceBytes, { limitInputPixels: 25000000 }).rotate().resize({ width: 1200, height: 1000, fit: 'inside', withoutEnlargement: true }).removeAlpha().toColourspace('srgb').raw().toBuffer({ resolveWithObject: true });
     const mask = await sofaMask(data, info.width, info.height, sourceKey);
     const pixels = recolourSofaPixels(data, mask, colour);
-    const webp = await sharp(Buffer.from(pixels), { raw: { width: info.width, height: info.height, channels: 3 } }).webp({ quality: 90 }).toBuffer();
+    let webp: Buffer;
+    if (themeBytes) {
+      const cutout = await sharp(await renderSofaCutout(pixels, mask, info.width, info.height)).trim().resize({ width: 1080, height: 740, fit: 'inside' }).png().toBuffer();
+      const size = await sharp(cutout).metadata();
+      webp = await sharp(themeBytes).resize(1200, 1000, { fit: 'cover' }).composite([{ input: cutout, left: Math.round((1200-size.width!)/2), top: 910-size.height! }]).webp({ quality: 90 }).toBuffer();
+    } else {
+      webp = await sharp(Buffer.from(pixels), { raw: { width: info.width, height: info.height, channels: 3 } }).webp({ quality: 90 }).toBuffer();
+    }
     await atomicWrite(output, webp);
     return url;
   })();

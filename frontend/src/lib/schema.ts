@@ -53,7 +53,7 @@ interface ProductSchema {
     url: string;
     priceCurrency: string;
     price: number;
-    availability: string;
+    availability?: string;
   };
   aggregateRating?: {
     '@type': string;
@@ -147,6 +147,8 @@ export function generateProductSchema(product: {
   id: string;
   rating?: number;
   reviewCount?: number;
+  in_stock?: boolean;
+  availability_unknown?: boolean;
 }): ProductSchema {
   const schema: ProductSchema = {
     '@context': 'https://schema.org',
@@ -160,7 +162,7 @@ export function generateProductSchema(product: {
       url: `${SITE_URL}/product/${product.id}`,
       priceCurrency: 'GBP',
       price: product.base_price,
-      availability: 'https://schema.org/InStock',
+      ...(!product.availability_unknown ? { availability: product.in_stock === false ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock' } : {}),
     },
   };
 

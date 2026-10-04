@@ -10,7 +10,7 @@ import { ProductCard, Spinner } from '@/components/ui';
 import { getProductPrice, type StoreProduct } from '@/lib/product-options';
 
 import CatalogueHero from '@/components/CatalogueHero';
-import { SOFA_CATEGORIES } from '@/lib/product-categories';
+import { SOFA_CATEGORIES, categoryLabel as labelForCategory, inCategory } from '@/lib/product-categories';
 
 const CATEGORIES = ['All', ...SOFA_CATEGORIES] as const;
 type Category = typeof CATEGORIES[number] | '2-Seater,3-Seater';
@@ -38,6 +38,9 @@ const CATEGORY_COPY: Record<Category, string> = {
   'U-Shape': 'Room for everyone to relax.',
   'Sofa Bed': 'A comfortable seat. A welcoming bed.',
   Recliner: 'Put your feet up. Settle in.',
+  'Sofa Sets': 'Made to belong together.',
+  Armchairs: 'Your own little corner of comfort.',
+  Footstools: 'The perfect finishing touch.',
 };
 const normaliseCategory = (value: string | null): Category => {
   if (value === '2-Seater,3-Seater' || value === '3-Seater,2-Seater') return '2-Seater,3-Seater';
@@ -45,12 +48,12 @@ const normaliseCategory = (value: string | null): Category => {
 };
 const formatPrice = (value: number) => new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: value % 1 === 0 ? 0 : 2 }).format(value);
 
-export default function ProductsClient() {
+export default function ProductsClient({ initialProducts }: { initialProducts?: StoreProduct[] }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const reduceMotion = useReducedMotion();
-  const [products, setProducts] = useState<StoreProduct[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState<StoreProduct[]>(initialProducts || []);
+  const [loading, setLoading] = useState(!initialProducts);
   const [loadError, setLoadError] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [category, setCategory] = useState<Category>(normaliseCategory(searchParams.get('category')));
@@ -60,7 +63,10 @@ export default function ProductsClient() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const categoryLabel = category === 'All' ? 'All sofas' : category === '2-Seater,3-Seater' ? '2 & 3 seater sofas' : `${category} sofas`;
+  const [visibleCount, setVisibleCount] = useState(12);
+  useEffect(() => { setVisibleCount(12); }, [category, query, fabric, sortBy, maxPrice]);
+  useEffect(() => { setMaxPrice(null); }, [category]);
+  const categoryLabel = category === 'All' ? 'All sofas' : category === '2-Seater,3-Seater' ? '2 & 3 seater sofas' : labelForCategory(category);
 
   useEffect(() => {
     setCategory(normaliseCategory(searchParams.get('category')));
@@ -94,7 +100,7 @@ export default function ProductsClient() {
       }
     }
 
-    fetchProducts(true);
+    if (!initialProducts || reloadKey > 0) fetchProducts(true);
     const refresh = () => fetchProducts();
     const channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('corner-sofa-products') : null;
     channel?.addEventListener('message', refresh);
@@ -105,14 +111,18 @@ export default function ProductsClient() {
       channel?.close();
       window.removeEventListener('focus', refresh);
     };
-  }, [reloadKey]);
+  }, [reloadKey, initialProducts]);
 
-  const priceCeiling = useMemo(() => Math.max(5000, ...products.map((product) => Math.ceil(getProductPrice(product) / 100) * 100)), [products]);
+  const categoryProducts = useMemo(() => products.filter(product => category === 'All' || inCategory(product, category)), [products, category]);
+  const categoryPrices = categoryProducts.map(getProductPrice);
+  const priceFloor = categoryPrices.length ? Math.min(...categoryPrices) : 0;
+  const priceCeiling = Math.max(priceFloor + 1, ...categoryPrices);
+  const priceRange = categoryPrices.length ? `${formatPrice(priceFloor)} – ${formatPrice(Math.max(...categoryPrices))}` : '';
   const activeFilterCount = Number(category !== 'All') + Number(fabric !== 'All fabrics') + Number(maxPrice !== null) + Number(query.trim().length > 0);
   const filtered = useMemo(() => {
     const search = query.trim().toLowerCase();
     let result = products.filter((product) => {
-      if (category !== 'All' && !category.split(',').includes(product.category)) return false;
+      if (category !== 'All' && !inCategory(product, category)) return false;
       if (maxPrice !== null && getProductPrice(product) > maxPrice) return false;
       const productText = `${product.title} ${product.description || ''} ${product.category} ${product.variants?.map((variant) => variant.color).join(' ') || ''}`.toLowerCase();
       if (search && !productText.includes(search)) return false;
@@ -152,24 +162,11 @@ export default function ProductsClient() {
   }
 
   return (
-    <div className="min-h-screen bg-[#101310] text-[#26352e]">
-      <CatalogueHero title={CATEGORY_COPY[category]} categoryLabel={categoryLabel} category={category} query={query} />
+    <div className="catalogue-page min-h-screen text-[#26352e]">
+      <CatalogueHero title={CATEGORY_COPY[category]} categoryLabel={categoryLabel} category={category} count={categoryProducts.length} priceRange={priceRange} loading={loading} onCategoryChange={chooseCategory} />
 
       <section id="collection" aria-label="Shop sofas" className="catalogue-full-width w-full scroll-mt-28 px-3 py-9 sm:px-5 lg:px-5 lg:py-12">
-        <div className="mb-8 flex gap-2 overflow-x-auto pb-2" aria-label="Sofa categories">
-          {CATEGORIES.map((item) => (
-            <button key={item} type="button" onClick={() => chooseCategory(item)} aria-pressed={category.split(',').includes(item)} className={`shrink-0 rounded-full border px-5 py-3 text-sm font-medium transition-all ${category.split(',').includes(item) ? 'border-[#26352e] bg-[#26352e] text-white shadow-sm' : 'border-[#e1e3da] bg-white/70 text-[#687160] hover:border-[#899480] hover:text-[#26352e]'}`}>
-              {item === 'All' ? 'All sofas' : `${item} sofas`}
-            </button>
-          ))}
-        </div>
-        <div className="catalogue-category-shortcuts" aria-label="More sofa categories">
-          <Link href="/products?category=U-Shape">U-shape sofas <ArrowUpRight size={14} aria-hidden="true" /></Link>
-          <Link href="/products?category=Recliner&q=electric">Electric recliners <ArrowUpRight size={14} aria-hidden="true" /></Link>
-          <Link href="/products?category=Recliner&q=manual">Manual recliners <ArrowUpRight size={14} aria-hidden="true" /></Link>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-6">
+        <div className="catalogue-layout grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-6">
           <aside className="catalogue-sidebar self-start lg:sticky lg:top-32">
             <button type="button" onClick={() => setFiltersOpen(!filtersOpen)} aria-expanded={filtersOpen} aria-controls="catalogue-filters" className="flex w-full items-center justify-between rounded-xl border border-[#e1e3da] bg-white/70 p-4 text-sm font-medium lg:hidden">
               <span className="flex items-center gap-2"><SlidersHorizontal size={17} />Filters {activeFilterCount > 0 && <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#26352e] text-[10px] text-white">{activeFilterCount}</span>}</span>
@@ -195,8 +192,8 @@ export default function ProductsClient() {
               <div className="border-t border-[#e6e6df] py-5">
                 <label htmlFor="max-price" className="mb-4 block text-xs font-medium uppercase tracking-[0.12em] text-[#65745d]">Your budget</label>
                 <p className="mb-4 text-sm font-medium">{maxPrice === null ? 'Any price' : `Up to ${formatPrice(maxPrice)}`}</p>
-                <input id="max-price" type="range" min={0} max={priceCeiling} step={100} value={maxPrice ?? priceCeiling} onChange={(event) => { const value = Number(event.target.value); setMaxPrice(value === priceCeiling ? null : value); }} aria-valuetext={maxPrice === null ? 'Any price' : `Up to ${formatPrice(maxPrice)}`} className="h-1.5 w-full cursor-pointer accent-[#65745d]" />
-                <div className="mt-2 flex justify-between text-[11px] text-[#77806e]"><span>£0</span><span>{formatPrice(priceCeiling)}+</span></div>
+                <input id="max-price" type="range" min={priceFloor} max={priceCeiling} step={1} value={maxPrice ?? priceCeiling} onChange={(event) => { const value = Number(event.target.value); setMaxPrice(value === priceCeiling ? null : value); }} aria-valuetext={maxPrice === null ? 'Any price' : `Up to ${formatPrice(maxPrice)}`} className="h-1.5 w-full cursor-pointer accent-[#65745d]" />
+                <div className="mt-2 flex justify-between text-[11px] text-[#77806e]"><span>{formatPrice(priceFloor)}</span><span>{formatPrice(priceCeiling)}</span></div>
               </div>
               <button type="button" onClick={resetFilters} className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#dde1d5] px-3 py-3 text-xs font-medium transition-colors hover:bg-[#f0f2eb]"><RotateCcw size={13} aria-hidden="true" />Reset all filters</button>
             </div>
@@ -250,8 +247,8 @@ export default function ProductsClient() {
                 <button type="button" onClick={resetFilters} className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#26352e] px-6 py-3 text-sm text-white transition-colors hover:bg-[#465841]">Explore all sofas <ArrowRight size={15} aria-hidden="true" /></button>
               </div>
             ) : (
-              <div className={viewMode === 'grid' ? 'catalogue-sofa-grid grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4' : 'space-y-5'}>
-                {filtered.map((product) => (
+              <div className={viewMode === 'grid' ? 'catalogue-sofa-grid' : 'space-y-5'}>
+                {filtered.slice(0, visibleCount).map((product) => (
                   <ProductCard
                     key={product.id}
                     id={product.id}
@@ -263,10 +260,12 @@ export default function ProductsClient() {
                     variants={product.variants}
                     layout={viewMode}
                     description={product.description}
+                    priceType={product.price_type}
                   />
                 ))}
               </div>
             )}
+            {!loading && filtered.length > visibleCount && <div className="catalogue-load-more mt-9 text-center"><p className="mb-3 text-sm">Showing {Math.min(visibleCount, filtered.length)} of {filtered.length} products</p><button type="button" className="min-h-12 rounded-full border border-current px-8 py-3 text-sm font-medium" onClick={() => setVisibleCount(count => count + 12)}>Show more products</button></div>}
           </div>
         </div>
       </section>

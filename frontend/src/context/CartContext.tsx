@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import type { BuildSnapshot } from '@/lib/sofa-builder/types';
 
 interface CartItem {
   productId: string;
@@ -13,6 +14,8 @@ interface CartItem {
   title: string;
   itemType?: 'sofa' | 'swatch';
   offerToken?: string;
+  buildId?: string;
+  buildSnapshot?: BuildSnapshot;
 }
 
 interface CartContextProps {
@@ -23,6 +26,7 @@ interface CartContextProps {
   removeItem: (productId: string, variantId: string) => void;
   updateQuantity: (productId: string, variantId: string, quantity: number) => void;
   clearCart: () => void;
+  replaceItem: (productId: string, variantId: string, item: Omit<CartItem, 'quantity'>) => void;
 }
 
 const CartContext = createContext<CartContextProps | undefined>(undefined);
@@ -33,15 +37,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     setMounted(true);
-    const stored = localStorage.getItem('cart');
-    if (stored) {
-      setItems(JSON.parse(stored));
-    }
+    try { const stored = JSON.parse(localStorage.getItem('cart') || '[]'); if (Array.isArray(stored)) setItems(stored); } catch {}
   }, []);
 
   useEffect(() => {
     if (mounted) {
-      localStorage.setItem('cart', JSON.stringify(items));
+      try { localStorage.setItem('cart', JSON.stringify(items)); } catch {}
     }
   }, [items, mounted]);
 
@@ -87,9 +88,17 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const clearCart = () => setItems([]);
+  const replaceItem = (productId: string, variantId: string, item: Omit<CartItem, 'quantity'>) => setItems(current => {
+    // One update replaces the old line; compatible identical configurations can merge.
+    const original = current.find(line => line.variantId === variantId);
+    const quantity = original?.quantity || 1;
+    const rest = current.filter(line => line !== original);
+    const match = rest.find(line => line.productId === item.productId && line.variantId === item.variantId);
+    return match ? rest.map(line => line === match ? { ...item, quantity: Math.min(10, line.quantity + quantity) } : line) : [...rest, { ...item, quantity }];
+  });
 
   return (
-    <CartContext.Provider value={{ items, total, itemCount, addItem, removeItem, updateQuantity, clearCart }}>
+    <CartContext.Provider value={{ items, total, itemCount, addItem, removeItem, updateQuantity, clearCart, replaceItem }}>
       {children}
     </CartContext.Provider>
   );

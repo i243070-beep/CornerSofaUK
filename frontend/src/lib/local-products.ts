@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 import { mkdir, readFile, rename, writeFile } from 'fs/promises';
 import path from 'path';
+import bundledCatalogue from '@/data/catalogue.json';
 import type { StoreProduct } from './product-options';
 
 export type LocalProduct = StoreProduct;
@@ -46,6 +47,7 @@ const seedProducts: LocalProduct[] = seedDetails.map((item, index) => ({
 
 const dataDirectory = process.env.PRODUCT_DATA_DIR || path.join(process.cwd(), '.local-data');
 const productsFile = path.join(dataDirectory, 'products.json');
+const bundledProducts = structuredClone(bundledCatalogue) as LocalProduct[];
 
 async function saveProducts(products: LocalProduct[]) {
   await mkdir(dataDirectory, { recursive: true });
@@ -59,8 +61,11 @@ export async function getLocalProducts(): Promise<LocalProduct[]> {
     return JSON.parse(await readFile(productsFile, 'utf8')) as LocalProduct[];
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-    await saveProducts(seedProducts);
-    return structuredClone(seedProducts);
+    const products = bundledProducts.length ? bundledProducts : seedProducts;
+    if (!process.env.VERCEL) {
+      await saveProducts(products);
+    }
+    return structuredClone(products);
   }
 }
 

@@ -12,9 +12,10 @@ export async function POST(request: NextRequest) {
   }
   try {
     if (Number(request.headers.get('content-length')) > 8000) return NextResponse.json({ error: 'Photo request is too large.' }, { status: 400 });
-    const { source, color } = await request.json();
+    const { source, color, theme = '' } = await request.json();
     if (typeof source !== 'string' || typeof color !== 'string') return NextResponse.json({ error: 'Choose a main sofa photo and colour.' }, { status: 400 });
-    const url = await generateSofaPreview(source, color);
+    if (typeof theme !== 'string' || (theme && !/^bg-[\w-]+\.(png|webp|jpg)$/i.test(theme))) return NextResponse.json({ error: 'Choose an existing room theme.' }, { status: 400 });
+    const url = await generateSofaPreview(source, color, theme);
     return NextResponse.json({ url }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     console.error('Sofa preview generation failed:', error instanceof Error ? error.message : error);

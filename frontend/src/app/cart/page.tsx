@@ -1,5 +1,6 @@
 'use client';
 
+import BuildSpecification from '@/components/sofa-builder/BuildSpecification';
 import { useCart } from '@/context/CartContext';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -28,14 +29,14 @@ export default function CartPage() {
           <Link href="/products" className="inline-flex min-h-12 items-center justify-center gap-4 rounded-full bg-[#344536] px-7 py-3.5 text-sm font-medium text-white transition-colors hover:bg-[#243326]">
             Find your sofa <ArrowRight size={17} aria-hidden="true" />
           </Link>
-          <Link href="/swatches" className="mx-auto mt-3 flex min-h-11 w-fit items-center px-4 text-xs text-[#667456] underline decoration-[#667456]/35 underline-offset-4">Start with free fabric swatches</Link>
+          <Link href="/swatches" className="mx-auto mt-3 flex min-h-11 w-fit items-center px-4 text-xs text-[#667456] underline decoration-[#667456]/35 underline-offset-4">Choose your sofa fabric</Link>
         </motion.div>
       </section>
     );
   }
 
   return (
-    <section className="bg-[#faf9f6] px-5 py-9 text-[#28352c] sm:px-8 sm:py-12 lg:px-12">
+    <section className="commerce-studio commerce-basket bg-[#faf9f6] px-5 py-9 text-[#28352c] sm:px-8 sm:py-12 lg:px-12">
       <div className="mx-auto max-w-[1280px]">
         <Link href="/products" className="mb-8 inline-flex min-h-10 items-center gap-2 text-xs text-[#727a69] transition-colors hover:text-[#28352c]"><ArrowLeft size={15} aria-hidden="true" />Continue shopping</Link>
         <div className="mb-9 flex flex-wrap items-end justify-between gap-4 sm:mb-11">
@@ -70,7 +71,7 @@ export default function CartPage() {
                           <div className="min-w-0">
                             <h2 className="break-words text-base font-medium leading-snug tracking-[-0.02em] sm:text-xl">{item.title}</h2>
                             <p className="mt-1.5 text-xs leading-relaxed text-[#78806f]">{item.range_type}</p>
-                            <p className="mt-1 text-xs leading-relaxed text-[#78806f]">{item.color}</p>
+                            <p className="mt-1 text-xs leading-relaxed text-[#78806f]">{item.color}</p>{item.buildSnapshot && <><BuildSpecification build={item.buildSnapshot} compact /><Link href={`/build/?build=${item.buildId}&edit=${encodeURIComponent(item.variantId)}`} className="mt-2 inline-block text-xs font-semibold underline">Edit my configuration</Link><p className="mt-2 text-xs">Delivery and services are calculated once at checkout.</p></>}
                           </div>
                           <button type="button" onClick={() => removeItem(item.productId, item.variantId)} className="-mr-2 -mt-2 hidden h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#858a7d] transition-colors hover:bg-[#f4e9e5] hover:text-[#a45f48] sm:flex" aria-label={`Remove ${item.title} in ${item.color} from basket`}><Trash2 size={17} strokeWidth={1.5} aria-hidden="true" /></button>
                         </div>
@@ -115,8 +116,8 @@ export default function CartPage() {
                 <div className="flex items-center justify-between gap-3 border-t border-[#d8dece] pt-5"><dt className="font-medium">Total</dt><dd className="text-2xl font-medium tracking-[-0.04em] tabular-nums" aria-live="polite" aria-atomic="true">{formatPrice(total)}</dd></div>
               </dl>
               <p className="mb-6 mt-2 text-[11px] leading-relaxed text-[#7b8570]">Additional delivery options at checkout.</p>
-              {hasSofa ? <Link href={items.some(item => item.offerToken) ? "/alashi-checkout/" : "/checkout"} className="flex min-h-[52px] items-center justify-center gap-4 rounded-full bg-[#344536] px-5 py-3.5 text-sm font-medium text-white shadow-[0_4px_14px_rgba(40,53,44,0.1)] transition-colors hover:bg-[#243326]">Continue to checkout <ArrowRight size={17} aria-hidden="true" /></Link> : <div className="rounded-2xl border border-[#ead9c8] bg-[#fff8ef] px-4 py-3 text-xs leading-relaxed text-[#8c684d]">Add a sofa to your basket before checkout. Fabric swatches cannot be purchased alone.</div>}
-              <p className="mt-4 flex items-center justify-center gap-1.5 text-[10px] text-[#7b8570]"><LockKeyhole size={12} strokeWidth={1.5} aria-hidden="true" />Safe and secure payment</p>
+              {hasSofa ? <Link href="/checkout/" className="flex min-h-[52px] items-center justify-center gap-4 rounded-full bg-[#344536] px-5 py-3.5 text-sm font-medium text-white shadow-[0_4px_14px_rgba(40,53,44,0.1)] transition-colors hover:bg-[#243326]">Continue to checkout <ArrowRight size={17} aria-hidden="true" /></Link> : <div className="rounded-2xl border border-[#ead9c8] bg-[#fff8ef] px-4 py-3 text-xs leading-relaxed text-[#8c684d]">Add a sofa to your basket before checkout. Fabric swatches cannot be purchased alone.</div>}
+              <p className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-[#7b8570]"><Check size={14} strokeWidth={1.5} aria-hidden="true" />Pay on delivery. No online payment needed.</p>
             </div>
             <div className="space-y-4 px-5 py-7">
               <div className="flex items-start gap-3"><Truck size={19} strokeWidth={1.5} className="mt-0.5 shrink-0 text-[#718063]" aria-hidden="true" /><div><p className="text-xs font-medium">Delivered with care</p><p className="mt-1 text-[11px] leading-relaxed text-[#838a79]">Free standard delivery to your room of choice.</p></div></div>

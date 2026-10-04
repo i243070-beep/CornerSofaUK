@@ -12,12 +12,20 @@ const SOFA_LINKS = [
   { href: '/products?category=2-Seater', label: '2 seater sofas' },
   { href: '/products?category=3-Seater', label: '3 seater sofas' },
   { href: '/products?category=Recliner', label: 'Recliner sofas' },
+  { href: '/products?category=U-Shape', label: 'U-shape sofas' },
+  { href: '/products?category=Sofa%20Bed', label: 'Sofa beds' },
+  { href: '/products?category=Sofa%20Sets', label: 'Sofa sets' },
+  { href: '/products?category=Armchairs', label: 'Armchairs' },
+  { href: '/products?category=Footstools', label: 'Footstools' },
 ];
 const MORE_LINKS = [
+  { href: '/swatches/', label: 'Swatches' },
+  { href: '/build', label: 'Build your sofa' },
   { href: '/room-planner/', label: 'Plan my room' },
   { href: '/about', label: 'Our story' },
   { href: '/appointment', label: 'Visit our showroom' },
   { href: '/size-guide', label: 'Size guide' },
+  { href: '/my-orders', label: 'My orders & deliveries' },
   { href: '/delivery-info', label: 'Delivery information' },
   { href: '/reviews', label: 'Customer reviews' },
   { href: '/faq', label: 'FAQs' },
@@ -46,7 +54,7 @@ export default function MobileMenu() {
     if (!isOpen) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    const desktop = window.matchMedia('(min-width: 1024px)');
+    const desktop = window.matchMedia('(min-width: 1280px)');
     function handleResize(event: MediaQueryListEvent) {
       if (event.matches) closeMenu();
     }
@@ -66,7 +74,7 @@ export default function MobileMenu() {
           dialogRef.current?.showModal();
           setIsOpen(true);
         }}
-        className="flex h-11 w-11 items-center justify-center rounded-full text-[#28352c] transition-colors hover:bg-[#e9ece4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#526449] lg:hidden"
+        className="mobile-menu-trigger flex h-11 w-11 items-center justify-center rounded-full text-[#28352c] transition-colors hover:bg-[#e9ece4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#526449] xl:hidden"
         aria-label="Open navigation menu"
         aria-expanded={isOpen}
         aria-controls={dialogId}

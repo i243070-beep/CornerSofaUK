@@ -118,7 +118,8 @@ export default function MiniCart() {
                   <div className="mb-5 flex items-center justify-between text-sm text-[#28352c]">
                     <span>Subtotal</span><span className="text-lg font-semibold">{formatPrice(total)}</span>
                   </div>
-                  <Link href={items.some(item => item.offerToken) ? "/alashi-checkout/" : "/checkout"} onClick={() => setOpen(false)} className="flex min-h-11 items-center justify-center gap-3 rounded-full bg-[#344536] px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-[#243326]">Continue to checkout <ArrowRight size={16} aria-hidden="true" /></Link>
+                  <p className="mb-4 text-center text-xs text-[#526649]">Pay on delivery. No online payment needed.</p>
+                  <Link href={items.some(item => item.offerToken) ? "/alashi-checkout/" : "/checkout"} onClick={() => setOpen(false)} className="flex min-h-11 items-center justify-center gap-3 rounded-full bg-[#344536] px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-[#243326]">Order — pay on delivery <ArrowRight size={16} aria-hidden="true" /></Link>
                   <Link href="/cart" onClick={() => setOpen(false)} className="mt-2 flex min-h-11 items-center justify-center rounded-full text-sm font-medium text-[#344536] underline decoration-[#344536]/30 underline-offset-4 transition-colors hover:bg-white/70">View your basket</Link>
                 </div>
               </>

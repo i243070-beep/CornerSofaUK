@@ -2,22 +2,21 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowDownLeft, ArrowUpRight, Armchair, Boxes, CalendarDays, Check, ChevronDown, CircleAlert, Clock3, Layers, Package, RefreshCw, Search, Sparkles } from 'lucide-react';
+import { ArrowUpRight, Armchair, CalendarDays, Check, ChevronDown, CircleAlert, Clock3, Layers, Package, RefreshCw, Search, Sparkles } from 'lucide-react';
 import styles from './dashboard.module.css';
 
 interface Stats {
   products: number; swatchRequests: number; appointments: number; orders: number;
-  pendingAppointments: number; pendingSwatches: number; lowStockProducts: number;
+  pendingAppointments: number; pendingSwatches: number;
 }
 interface Product {
   id: string; title: string; category: string; images?: string[];
-  variants?: Array<{ stock: number; color: string }>;
 }
 interface Order { id: string; customer: string; total: number; status: string; date: string }
 interface Appointment { id: string; customer_name: string; appointment_date: string; created_at?: string; status: string }
 interface Swatch { id: string; customer_name: string; created_at: string; status?: string; swatch_ids?: string[] }
 type Range = 'year' | 'month' | 'week';
-type WorkType = 'stock' | 'orders' | 'appointments' | 'swatches';
+type WorkType = 'orders' | 'appointments' | 'swatches';
 interface WorkItem { id: string; type: WorkType; title: string; description: string; label: string; href: string; date?: string; image?: string; detail: string }
 interface DashboardData { stats: Stats | null; products: Product[] | null; orders: Order[] | null; appointments: Appointment[] | null; swatches: Swatch[] | null }
 const emptyData: DashboardData = { stats: null, products: null, orders: null, appointments: null, swatches: null };
@@ -33,8 +32,8 @@ const actions = [
   { title: 'Fabric requests', href: '/admin/swatch-requests', icon: Layers, tone: 'blue' },
   { title: 'Appointments', href: '/admin/appointments', icon: CalendarDays, tone: 'purple' },
 ];
-const workLabels: Record<WorkType, string> = { stock: 'Stock alerts', orders: 'Orders', appointments: 'Appointments', swatches: 'Swatch requests' };
-const workIcons = { stock: Armchair, orders: Package, appointments: CalendarDays, swatches: Layers };
+const workLabels: Record<WorkType, string> = { orders: 'Orders', appointments: 'Appointments', swatches: 'Swatch requests' };
+const workIcons = { orders: Package, appointments: CalendarDays, swatches: Layers };
 const number = (value?: number) => value === undefined ? '—' : value.toLocaleString('en-GB');
 const money = (value: number) => new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(value);
 
@@ -106,23 +105,9 @@ export default function AdminDashboard() {
 
   const stats = data.stats;
   const points = useMemo(() => createPoints(data, range, updatedAt || new Date()), [data, range, updatedAt]);
-  const variants = data.products?.flatMap((product) => product.variants || []) || [];
-  const stockGroups = [
-    { title: 'Low stock', count: variants.filter((variant) => Number(variant.stock) > 0 && Number(variant.stock) <= 3).length, className: styles.bubblePink },
-    { title: 'Healthy', count: variants.filter((variant) => Number(variant.stock) > 3).length, className: styles.bubbleBlue },
-    { title: 'Sold out', count: variants.filter((variant) => Number(variant.stock) <= 0).length, className: styles.bubbleStriped },
-  ];
   const inventoryAvailable = data.products !== null;
   const workItems = useMemo(() => {
     const result: WorkItem[] = [];
-    data.products?.forEach((product) => {
-      const low = product.variants?.filter((variant) => Number(variant.stock) <= 3) || [];
-      if (low.length) result.push({
-        id: 'stock-' + product.id, type: 'stock', title: product.title, label: low.some((variant) => Number(variant.stock) <= 0) ? 'Sold out' : 'Low stock',
-        description: low.length + (low.length === 1 ? ' finish needs' : ' finishes need') + ' a stock review. Keep your collection ready for customers.',
-        href: '/admin/products', image: product.images?.[0], detail: low.map((variant) => variant.color + ': ' + variant.stock + ' left').join(' · '),
-      });
-    });
     data.orders?.forEach((order) => {
       if (!['cancelled', 'delivered'].includes(order.status)) result.push({
         id: 'order-' + order.id, type: 'orders', title: order.customer, label: order.status || 'Order',
@@ -165,7 +150,7 @@ export default function AdminDashboard() {
           })}
         </div>
         <div className={styles.metrics}>
-          {[{ title: 'Total products', value: stats?.products, href: '/admin/products', icon: Armchair, className: styles.greenMetric }, { title: 'Total orders', value: stats?.orders, href: '/admin/orders', icon: Package, className: styles.greenMetric }, { title: 'Low-stock variants', value: stats?.lowStockProducts, href: '/admin/products', icon: ArrowDownLeft, className: styles.orangeMetric }].map(({ icon: Icon, ...metric }) => <Link key={metric.title} href={metric.href} className={styles.metric}><div><span className={metric.className}><Icon size={13} aria-hidden="true" /></span><strong>{loading ? '—' : number(metric.value)}</strong></div><p>{metric.title}</p></Link>)}
+          {[{ title: 'Total sofas', value: stats?.products, href: '/admin/products', icon: Armchair, className: styles.greenMetric }, { title: 'Total orders', value: stats?.orders, href: '/admin/orders', icon: Package, className: styles.greenMetric }].map(({ icon: Icon, ...metric }) => <Link key={metric.title} href={metric.href} className={styles.metric}><div><span className={metric.className}><Icon size={13} aria-hidden="true" /></span><strong>{loading ? '—' : number(metric.value)}</strong></div><p>{metric.title}</p></Link>)}
         </div>
       </div>
 
@@ -188,8 +173,8 @@ export default function AdminDashboard() {
           <div className={styles.workCards} aria-live="polite">
             {loading ? <div className={styles.emptyWork}><RefreshCw size={22} className={styles.spinning} /><p>Bringing your store into focus…</p></div> : visibleWork.length ? visibleWork.map((item) => {
               const Icon = workIcons[item.type];
-              return <Link className={styles.workCard} href={item.href} key={item.id}><div className={styles.workCardTop}><span className={item.type === 'stock' ? styles.workBadgeWhite : styles.workBadgeBlue}>{item.label}</span><ArrowUpRight size={15} aria-hidden="true" /></div><p className={styles.workDescription}>{item.description}</p><div className={styles.workCardBottom}>{item.image ? <img src={item.image} alt="" width={34} height={34} loading="lazy" className={styles.workImage} /> : <span className={styles.workAvatar}><Icon size={17} aria-hidden="true" /></span>}<div><h3>{item.title}</h3><p>{item.detail}</p></div></div></Link>;
-            }) : <div className={styles.emptyWork}>{unavailable ? <CircleAlert size={25} aria-hidden="true" /> : <Check size={25} aria-hidden="true" />}<p>{unavailable ? 'Activity is unavailable for some sources.' : 'You’re all caught up.'}</p><span>{workType !== 'all' ? 'Try a different activity filter.' : 'New orders, requests and stock alerts appear here.'}</span></div>}
+              return <Link className={styles.workCard} href={item.href} key={item.id}><div className={styles.workCardTop}><span className={styles.workBadgeBlue}>{item.label}</span><ArrowUpRight size={15} aria-hidden="true" /></div><p className={styles.workDescription}>{item.description}</p><div className={styles.workCardBottom}>{item.image ? <img src={item.image} alt="" width={34} height={34} loading="lazy" className={styles.workImage} /> : <span className={styles.workAvatar}><Icon size={17} aria-hidden="true" /></span>}<div><h3>{item.title}</h3><p>{item.detail}</p></div></div></Link>;
+            }) : <div className={styles.emptyWork}>{unavailable ? <CircleAlert size={25} aria-hidden="true" /> : <Check size={25} aria-hidden="true" />}<p>{unavailable ? 'Activity is unavailable for some sources.' : 'You’re all caught up.'}</p><span>{workType !== 'all' ? 'Try a different activity filter.' : 'New orders, requests and appointments appear here.'}</span></div>}
           </div>
         </section>
 

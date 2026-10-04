@@ -1,0 +1,112 @@
+/* Shared storefront spacing and readable cards at laptop widths. */
+@media(min-width:1280px){.reference-hero-actions{margin-left:calc(16px - clamp(18px,3.8cqw,72px))}}
+html,body{margin:0;min-width:0;max-width:100%;border:0;border-radius:0}
+.catalogue-page{width:100%;min-width:0;background:#f6f5ef}
+html[data-theme=dark] .catalogue-page{background:#17231e}
+.catalogue-page .catalogue-full-width{max-width:1500px;margin-inline:auto;padding-top:30px}
+.catalogue-page .catalogue-layout{min-width:0}
+.catalogue-page #catalogue-filters{border:0;border-radius:0;background:transparent;padding:4px 16px 20px 0}
+.catalogue-page .catalogue-sidebar{border-right:1px solid #cbd1c444;padding-right:12px}
+@media(min-width:1280px){.catalogue-page .catalogue-sofa-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:1023px){.catalogue-page .catalogue-sidebar{border-right:0;padding-right:0}.catalogue-page #catalogue-filters{padding:20px 0}}
+.catalogue-full-width { padding:36px clamp(16px,3vw,56px) 72px; }
+.catalogue-sofa-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;align-items:stretch; }
+@media(min-width:1400px) { .catalogue-sofa-grid{grid-template-columns:repeat(3,minmax(0,1fr))} }
+@media(min-width:1900px) { .catalogue-sofa-grid{grid-template-columns:repeat(4,minmax(0,1fr))} }
+.catalogue-toolbar input,.catalogue-toolbar select { min-height:48px; }
+.catalogue-load-more { color:#c1cfb9; }
+html[data-theme=light] .catalogue-load-more { color:#344b39; }
+.catalogue-category-shortcuts { flex-wrap:wrap; }
+.catalogue-full-width [aria-label="Sofa categories"] { scrollbar-width:thin;scroll-padding-inline:16px; }
+.catalogue-full-width [aria-label="Sofa categories"] button { min-height:44px; }
+.storefront-home .reference-collections { max-width:1440px;margin:auto;padding:64px clamp(16px,4vw,64px) 80px; }
+.reference-collections-heading p { font-size:14px;max-width:540px; }
+.storefront-home .home-dark-categories { padding:48px clamp(16px,4vw,64px); }
+.home-dark-categories .category-orbit-details { min-height:160px; }
+.home-dark-categories .category-orbit-title-row h3 { font-size:14px; }
+.home-dark-categories .category-orbit-buy { gap:8px;flex-wrap:wrap; }
+.home-dark-categories .category-orbit-buy>p strong { font-size:23px; }
+.reference-hero-actions>.mobile-menu-trigger { display:none; }
+@media(min-width:761px) and (max-width:1279px) {
+  .reference-hero-nav{gap:12px}.reference-hero-links a{padding-inline:15px;font-size:12px}
+  .reference-hero-brand{font-size:19px}.reference-hero-actions>a span{display:none!important}
+  .reference-hero-copy h1{font-size:clamp(40px,5vw,62px)}
+  .reference-hero-copy>p{font-size:15px}.reference-hero-search input,.reference-hero-shop{font-size:14px}
+  .reference-hero-search,.reference-hero-shop{height:46px}
+  .home-dark-categories .category-orbit-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:28px}
+}
+@media(max-width:1279px) {
+  .site-header nav[aria-label="Main navigation"]{display:none}
+  .site-header .mobile-menu-trigger{display:flex}
+}
+@media(max-width:760px) {
+  html[data-theme] .reference-home-hero{min-height:0;height:auto;padding:0 0 20px;background:#2d4d60;color:#fff;isolation:isolate}
+  .reference-hero-scene{height:600px}
+  .reference-hero-photo{top:292px;bottom:auto;left:0;right:0;height:310px;aspect-ratio:auto}
+  .reference-hero-image{width:100%;height:100%;object-fit:cover;object-position:center;mask-image:linear-gradient(to bottom,transparent,#000 17%)}
+  .reference-hero-nav{top:16px;left:18px;right:18px;flex-wrap:nowrap;gap:8px}
+  .reference-hero-brand{font-size:19px;gap:8px}.reference-hero-brand svg{width:31px}
+  .reference-hero-links{display:none}
+  .reference-hero-actions{gap:6px}
+  html[data-theme] .reference-hero-actions>div>button{width:44px;height:44px;min-height:44px;border-radius:50%;padding:10px}
+  .reference-hero-actions>a{display:none}
+  .reference-hero-actions>.mobile-menu-trigger{display:flex;width:44px;height:44px;background:#ffffff18;color:#fff;border:1px solid #ffffff50}
+  .reference-hero-copy{top:112px;width:calc(100% - 36px)}
+  .reference-hero-copy h1{font-size:clamp(33px,8.5vw,46px);line-height:1.08;letter-spacing:-.04em}
+  .reference-hero-copy>p{max-width:320px;font-size:14px;line-height:1.6;margin:16px auto 0}
+  .reference-hero-shop-row{margin-top:22px;gap:10px}
+  .reference-hero-search{flex:1;width:auto;max-width:none;height:48px}
+  .reference-hero-search input{font-size:16px;padding-inline:13px}
+  .reference-hero-search button{min-width:42px}
+  html[data-theme] .reference-hero-shop{height:48px;padding-inline:17px;font-size:13px;color:#fff;background:#d96720}
+  html[data-theme] .home-room-planner{position:relative;inset:auto;width:calc(100% - 32px);margin:0 16px;padding:18px 20px;border-radius:18px;background:#f5f2e9;color:#283b30;display:grid;grid-template-columns:1fr auto;gap:8px 16px;box-shadow:none}
+  .home-room-planner>svg{display:none}.home-room-planner h2{font-size:26px;margin:0}
+  .home-room-planner p{grid-column:1;font-size:12px;line-height:1.6}
+  html[data-theme] .home-room-planner>a{grid-column:2;grid-row:1/3;align-self:center;margin:0;min-height:46px;padding:12px 16px;background:#324b3b;color:#fff;font-size:12px}
+  .storefront-home .home-dark-categories{padding:36px 16px}
+  .home-category-title{font-size:32px;margin-bottom:28px}
+  .home-dark-categories .category-orbit-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 14px}
+  .home-dark-categories .category-orbit-photo{border-width:3px}
+  .home-dark-categories .category-orbit-details{padding:14px;min-height:0}
+  .home-dark-categories .category-orbit-title-row h3{font-size:13px;line-height:1.5}
+  .home-dark-categories .category-orbit-info>p{display:none}
+  .home-dark-categories .category-orbit-buy{margin-top:12px;padding-top:12px}
+  .home-dark-categories .category-orbit-buy>p strong{font-size:21px}
+  .home-dark-categories .category-orbit-buy>a{width:100%;min-height:44px;font-size:12px}
+  .storefront-home .reference-collections{padding:40px 16px 56px}
+  .reference-collections-heading h2{font-size:33px}.reference-collections-heading p{font-size:13px}
+  .reference-collections .featured-grid{grid-template-columns:1fr;gap:24px}
+  .catalogue-toolbar{gap:12px}.catalogue-toolbar>form{flex-basis:100%}
+  .catalogue-toolbar>div{width:100%;justify-content:space-between}
+  .catalogue-toolbar select{max-width:none;flex:1;font-size:14px}
+  .catalogue-toolbar input{font-size:16px}
+  .catalogue-full-width{padding:24px 16px 56px}
+  .catalogue-full-width [aria-label="Sofa categories"]{margin-bottom:16px}
+  .catalogue-full-width [aria-label="Sofa categories"] button{padding:10px 16px;font-size:13px}
+  .catalogue-layout{gap:18px}.catalogue-sofa-grid{gap:24px}
+  .theme-toggle{left:12px;bottom:max(12px,env(safe-area-inset-bottom));width:44px;height:44px;padding:0;justify-content:center}
+  .theme-toggle span{display:none}
+  .site-header>div:nth-child(2){height:70px;padding-inline:14px;gap:8px}
+  .site-header>div:first-child>div{min-height:32px;font-size:10px}
+  .site-header a[aria-label="Reviews"]{display:none}
+  .site-header a[aria-label="Sofa home"]>span:first-child{width:36px;height:36px}
+  .site-header a[aria-label="Sofa home"]>span:nth-child(2)>span:first-child{font-size:31px}
+  .sofa-room-dialog{width:100%;max-width:100%;height:100dvh;max-height:100dvh;border:0;border-radius:0}
+  .sofa-room-dialog-heading{font-size:13px;padding:12px 16px}
+  .product-detail-page h1{font-size:30px;line-height:1.18}
+  .product-detail-page nav[aria-label=Breadcrumb]>span[aria-current]{display:none}
+  input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{font-size:16px}
+}
+@media(max-width:599px) { .catalogue-sofa-grid{grid-template-columns:1fr} }
+@media(min-width:600px) and (max-width:760px) { .reference-collections .featured-grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media(max-width:359px) { .reference-hero-brand{font-size:16px}.reference-hero-brand svg{width:25px}.reference-hero-copy{top:102px}.home-room-planner>a{padding:10px}.home-room-planner h2{font-size:23px} }
+
+@media(min-width:360px) and (max-width:760px){.catalogue-sofa-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}}
+@media(max-width:760px){
+  .catalogue-full-width [aria-label="Sofa categories"]{flex-wrap:wrap;overflow:visible}
+  .sofa-builder .builder-nav{flex-wrap:wrap;min-width:0}.sofa-builder .builder-nav>nav{margin:0;max-width:100%;flex-wrap:wrap}
+  .sofa-builder.sofa-builder .builder-steps{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:12px}
+  .sofa-builder.sofa-builder .builder-steps button{min-height:44px}.sofa-builder.sofa-builder .builder-steps button>span:last-child{font-size:11px}
+  .sofa-builder .builder-photo img,.sofa-builder .builder-designs img{object-fit:contain}
+  .fabric-library .fabric-preview>img{object-fit:contain}
+}

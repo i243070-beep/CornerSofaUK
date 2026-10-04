@@ -12,4 +12,10 @@ out/
 !.env.example
 .local-data/
 .cache/
+uk-postcodes.csv
 frontend/artifacts/
+cornersofa 2026/
+cornersofa-2026*.zip
+cornersofa2026_qr.png
+tiktok_qr
+frontend/public/images/catalogue-rooms/

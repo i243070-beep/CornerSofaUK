@@ -8,24 +8,10 @@ interface Product {
 
 async function getProducts(): Promise<Product[]> {
   try {
-    const { sql } = await import('@/lib/db');
-    const rows = await sql`SELECT id FROM products ORDER BY created_at DESC` as Product[];
-    return rows;
+    const { listProducts } = await import('@/lib/product-store');
+    return (await listProducts()).map(({ id }) => ({ id }));
   } catch {
-    return [
-      { id: 'a1000000-0000-0000-0000-000000000001' },
-      { id: 'a1000000-0000-0000-0000-000000000002' },
-      { id: 'a1000000-0000-0000-0000-000000000003' },
-      { id: 'a1000000-0000-0000-0000-000000000004' },
-      { id: 'a1000000-0000-0000-0000-000000000005' },
-      { id: 'a1000000-0000-0000-0000-000000000006' },
-      { id: 'a1000000-0000-0000-0000-000000000007' },
-      { id: 'a1000000-0000-0000-0000-000000000008' },
-      { id: 'a1000000-0000-0000-0000-000000000009' },
-      { id: 'a1000000-0000-0000-0000-000000000010' },
-      { id: 'a1000000-0000-0000-0000-000000000011' },
-      { id: 'a1000000-0000-0000-0000-000000000012' },
-    ];
+    return [];
   }
 }
 
@@ -33,6 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const products = await getProducts();
 
   const staticPages = [
+    { url: `${SITE_URL}/build/`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.8 },
     { url: `${SITE_URL}/room-planner/`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
     { url: SITE_URL, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 1 },
     { url: `${SITE_URL}/products`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.9 },

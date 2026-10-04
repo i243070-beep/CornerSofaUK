@@ -1,0 +1,5 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { builderJson, getBuild, limitBuilder, saveBuild, configurationIdentity } from '@/lib/sofa-builder/server';
+export const dynamic = 'force-dynamic';
+export async function GET(request: NextRequest) { const build=await getBuild(request.nextUrl.searchParams.get('id')||''); return NextResponse.json(build?{build}:{error:'Saved build not found'},{status:build?200:404,headers:{'Cache-Control':'no-store'}}); }
+export async function POST(request: NextRequest) { try { limitBuilder('save:'+(request.headers.get('x-forwarded-for')||'local'),30); const body=await builderJson(request); const build=await saveBuild(body.selection,body.postcode); if(body.revision && body.revision!==build.price.revision) return NextResponse.json({error:'The price or specification changed. Review your updated build.',price:build.price},{status:409}); return NextResponse.json({build,identity:configurationIdentity(build.selection)},{status:201}); } catch(error) { return NextResponse.json({error:error instanceof Error?error.message:'Could not save build'},{status:400}); } }

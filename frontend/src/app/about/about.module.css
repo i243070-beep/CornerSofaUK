@@ -254,52 +254,42 @@
 .phoneHomeBar { position:absolute;bottom:10px;left:32%;width:36%;height:4px;border-radius:5px;background:#181818; }
 @media(max-width:900px){.phoneShowcase{gap:20px;padding:45px 22px}.phoneFrame{border-radius:35px;padding:6px}.phoneScreen{border-radius:25px;min-height:610px}.phoneStatus{padding:0 10px;font-size:8px}.phoneCopy h2{font-size:24px}.phoneScreen>img{height:190px}.phoneBrand{padding-inline:12px}.phoneBrand .wordmark{font-size:17px}}
 @media(max-width:650px){.phoneShowcase{grid-template-columns:minmax(0,360px);justify-content:center;gap:35px;padding:40px 24px}.phoneFrame{border-radius:48px}.phoneScreen{border-radius:38px;min-height:660px}.phoneScreen>img{height:250px}.phoneCopy h2{font-size:30px}.phoneBrand .wordmark{font-size:22px}}
-/* Saved light/dark theme palettes */
-:global(html[data-theme="light"]) .header{color:rgba(48,62,52,1)}
-:global(html[data-theme="light"]) .headerLight{border-bottom:1px solid rgba(200,207,196,0.09)}
-:global(html[data-theme="light"]) .hero{background:rgba(245,246,242,1);color:rgba(48,62,52,1)}
-:global(html[data-theme="light"]) .heroShade{background:linear-gradient(0deg,rgba(245,246,242,0.56),transparent 60%),linear-gradient(180deg,rgba(245,246,242,0.2),transparent 23%)}
-:global(html[data-theme="light"]) .heroCopy p{color:rgba(48,62,52,0.85)}
-:global(html[data-theme="light"]) .heroLink{border-bottom:1px solid rgba(200,207,196,0.7)}
-:global(html[data-theme="light"]) .ribbon{background:rgba(245,246,242,1)}
-:global(html[data-theme="light"]) .collectionStage{background:rgba(245,246,242,1);color:rgba(48,62,52,1)}
-:global(html[data-theme="light"]) .collectionStage::after{background:linear-gradient(0deg,rgba(245,246,242,0.55),transparent 75%)}
-:global(html[data-theme="light"]) .collectionOrbit{color:rgba(48,62,52,1)}
-:global(html[data-theme="light"]) .collectionOrbit::before,:global(html[data-theme="light"]) .collectionOrbit::after{border:1px solid rgba(200,207,196,0.6)}
-:global(html[data-theme="light"]) .collectionOrbit::after{border-color:rgba(200,207,196,0.28)}
-:global(html[data-theme="light"]) .collectionCaption > a{border-top:1px solid rgba(200,207,196,0.43)}
-:global(html[data-theme="light"]) .collectionCaption > p{color:rgba(48,62,52,0.85)}
-:global(html[data-theme="light"]) .collectionControls button{border:1px solid rgba(200,207,196,1)}
-:global(html[data-theme="light"]) .otherCard{color:rgba(48,62,52,1)}
-:global(html[data-theme="light"]) .otherCard::after{background:linear-gradient(0deg,rgba(245,246,242,0.58),transparent)}
-:global(html[data-theme="light"]) .otherOrbit{border:1px solid rgba(200,207,196,0.6)}
-:global(html[data-theme="light"]) .footerMiddle{border-top:1px solid rgba(200,207,196,1)}
-:global(html[data-theme="light"]) .menuDialog::backdrop,:global(html[data-theme="light"]) .searchDialog::backdrop{background:rgba(245,246,242,0.6)}
-:global(html[data-theme="light"]) .story{background:rgba(245,246,242,1);color:rgba(48,62,52,1)}
-:global(html[data-theme="light"]) .storyDetails>p{color:rgba(48,62,52,1)}
-:global(html[data-theme="light"]) .collectionSection{background:rgba(245,246,242,1);color:rgba(48,62,52,1)}
-:global(html[data-theme="light"]) .phoneShowcase{background:rgba(245,246,242,1)}
-:global(html[data-theme="light"]) .phoneFrame{border:3px solid rgba(200,207,196,1);background:rgba(245,246,242,1)}
-:global(html[data-theme="light"]) .phoneStatus i{background:rgba(245,246,242,1)}
-:global(html[data-theme="light"]) .phoneBottom a{border-bottom:1px solid rgba(200,207,196,1)}
-:global(html[data-theme="light"]) .phoneHomeBar{background:rgba(245,246,242,1)}
-:global(html[data-theme="dark"]) .headerLight{border-bottom:1px solid rgba(73,85,75,0.09)}
-:global(html[data-theme="dark"]) .heroLink{border-bottom:1px solid rgba(73,85,75,0.7)}
-:global(html[data-theme="dark"]) .storyDetails > p{color:rgba(231,236,227,1)}
-:global(html[data-theme="dark"]) .collectionOrbit::before,:global(html[data-theme="dark"]) .collectionOrbit::after{border:1px solid rgba(73,85,75,0.6)}
-:global(html[data-theme="dark"]) .collectionOrbit::after{border-color:rgba(73,85,75,0.28)}
-:global(html[data-theme="dark"]) .collectionCaption > a{border-top:1px solid rgba(73,85,75,0.43)}
-:global(html[data-theme="dark"]) .slideIndicators span{background:rgba(29,35,31,0.35)}
-:global(html[data-theme="dark"]) .slideIndicators button[aria-pressed='true'] span{background:rgba(29,35,31,1)}
-:global(html[data-theme="dark"]) .collectionControls button{border:1px solid rgba(73,85,75,1);color:rgba(231,236,227,1)}
-:global(html[data-theme="dark"]) .collectionControls button:hover{background:rgba(29,35,31,1)}
-:global(html[data-theme="dark"]) .promises p{color:rgba(231,236,227,1)}
-:global(html[data-theme="dark"]) .otherHeading p{color:rgba(231,236,227,1)}
-:global(html[data-theme="dark"]) .otherOrbit{border:1px solid rgba(73,85,75,0.6)}
-:global(html[data-theme="dark"]) .footer{background:rgba(29,35,31,1)}
-:global(html[data-theme="dark"]) .footerMiddle{border-top:1px solid rgba(73,85,75,1)}
-:global(html[data-theme="dark"]) .footerBottom{color:rgba(231,236,227,1)}
-:global(html[data-theme="dark"]) .menuNote{color:rgba(231,236,227,1)}
-:global(html[data-theme="dark"]) .phoneFrame{border:3px solid rgba(73,85,75,1)}
-:global(html[data-theme="dark"]) .phoneScreen{background:rgba(29,35,31,1);color:rgba(231,236,227,1)}
-:global(html[data-theme="dark"]) .phoneBottom a{border-bottom:1px solid rgba(73,85,75,1)}
+
+/* About has a permanent dark palette, independent of the saved site theme. */
+.page { --paper:#171f1b; --ink:#f4f0e7; --line:#46534a; color-scheme:dark; }
+.hero { height:auto; min-height:680px; max-height:none; display:flex; align-items:center; padding:135px 4.5% 65px; }
+.heroImage { position:absolute; inset:0; object-position:center 54%; }
+.heroShade { background:linear-gradient(90deg,rgba(9,13,10,.92) 0%,rgba(9,13,10,.72) 29%,rgba(9,13,10,.15) 58%,transparent 78%),linear-gradient(0deg,rgba(9,13,10,.35),transparent 45%); }
+.heroCopy { position:relative; inset:auto; max-width:580px; z-index:1; }
+.heroCopy .eyebrow { margin:0 0 15px; font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:#d5c3a3; }
+.heroCopy h1 { font-family:Georgia,serif; font-size:clamp(38px,4.1vw,66px); line-height:1.03; }
+.heroStory { position:relative; margin:28px 0 0 44px; max-width:370px; }
+.heroStory::before { content:''; position:absolute; left:-44px; top:10px; width:26px; height:1px; background:#b6bba080; }
+.heroStory h2 { font:18px/1.4 Georgia,serif; letter-spacing:0; color:#d6d9c8; }
+.heroCopy .heroIntro { font-size:clamp(17px,1.45vw,23px); line-height:1.3; margin-top:14px; color:#f3efe5; }
+.heroCopy .heroDetail { font-size:12px; line-height:1.65; margin-top:18px; max-width:340px; color:#cecfc3; }
+.heroLink { border-color:#ffffff70; color:#f8f4eb; }
+.valuesStrip { display:flex; gap:0; padding:30px 6%; background:radial-gradient(ellipse at 80% 0%,#304939,#11251b 70%); border-top:1px solid #c6d1b322; }
+.valuesStrip>div { display:flex; align-items:center; gap:20px; padding:5px 40px; border-right:1px solid #ffffff12; color:#c8d0b9; }
+.valuesStrip>div:first-child { padding-left:0; }.valuesStrip>div:last-child { border:0; }
+.valuesStrip strong { display:block; font-size:10px; font-weight:500; letter-spacing:.15em; text-transform:uppercase; }
+.valuesStrip small { display:block; margin-top:7px; font-size:11px; color:#a7b39f; }
+.collectionSection { padding-top:65px; scroll-margin-top:110px; }
+.phoneScreen { background:#1d231f; color:#e7ece3; }
+.phoneHomeBar { background:#bfcab6; }
+.otherHeading p,.menuNote { color:#bac6b7; }
+.collectionControls button { color:#e7ece3; border-color:#687362; }
+.collectionControls button:hover { background:#344638; }
+@media(min-width:1500px) { .hero { min-height:780px; } }
+@media(max-width:700px) {
+ .hero { min-height:680px; padding:110px 24px 45px; }
+ .heroImage { object-position:65% center; }
+ .heroShade { background:linear-gradient(90deg,rgba(9,13,10,.91),rgba(9,13,10,.6) 65%,rgba(9,13,10,.25)); }
+ .heroCopy { max-width:440px; }.heroCopy h1 { font-size:clamp(36px,8vw,48px); }
+ .heroCopy .eyebrow { font-size:8px; letter-spacing:.15em; }
+ .heroStory { margin-left:28px; }.heroStory::before { left:-28px; width:17px; }
+ .heroCopy .heroIntro { font-size:19px; }.heroCopy .heroDetail { font-size:12px; }
+ .valuesStrip { flex-wrap:wrap; gap:22px; padding:28px 24px; }
+ .valuesStrip>div { padding:0; border:0; flex:1 1 150px; gap:13px; }
+ .valuesStrip strong { font-size:9px; }.valuesStrip small { font-size:10px; }
+}

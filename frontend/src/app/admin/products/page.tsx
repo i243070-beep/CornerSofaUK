@@ -10,7 +10,7 @@ import { formatProductPrice, getColourHex, getSavings, type ProductVariant, type
 import { isSofaPreviewUrl, suggestColourName } from '@/lib/sofa-preview';
 
 type ColourForm = {
-  key: string; id?: string; range_type: string; color: string; color_hex: string;
+  theme?: string; key: string; id?: string; range_type: string; color: string; color_hex: string;
   price: string; stock: string; image: string; extraImages: string[];
   imageMode: 'auto' | 'original' | 'custom'; customImage: string; autoName: boolean;
   previewKey: string; previewStatus: 'pending' | 'ready' | 'error'; previewError: string; previewRetry: number;
@@ -28,24 +28,16 @@ const emptyForm: ProductForm = {
 const inputClass = 'admin-input w-full mt-1.5';
 const labelClass = 'text-[10px] text-white/50 uppercase tracking-[0.15em]';
 const validImageSource = (value: string) => /^\/(?!\/)/.test(value) || /^https?:\/\/\S+$/i.test(value);
-const colourOptions = [
-  { name: 'Black', hex: '#1a1a1a' },
-  { name: 'Blue', hex: '#497fbd' },
-  { name: 'White', hex: '#fffffe' },
-  { name: 'Light grey', hex: '#d3d3d3' },
-  { name: 'Green', hex: '#5f7f5a' },
-  { name: 'Red', hex: '#be3737' },
-  { name: 'Brown', hex: '#7a4b2a' },
-  { name: 'Beige', hex: '#d4c5a9' },
-];
-const colourPreviewKey = (source: string, colour: string) => JSON.stringify([source, colour.toLowerCase()]);
+const colourOptions = [{'name': 'Grey', 'hex': '#969b96'}, {'name': 'Black', 'hex': '#1a1a1a'}, {'name': 'Beige', 'hex': '#d4c5a9'}, {'name': 'Navy Blue', 'hex': '#263f65'}, {'name': 'Brown', 'hex': '#75452e'}, {'name': 'Cream', 'hex': '#ece6d8'}, {'name': 'Mink', 'hex': '#918071'}, {'name': 'Elephant Grey', 'hex': '#77766e'}, {'name': 'Oatmeal', 'hex': '#cbbda5'}, {'name': 'Taupe', 'hex': '#917a6b'}, {'name': 'Black & Grey', 'hex': '#454749'}, {'name': 'Charcoal', 'hex': '#484b47'}, {'name': 'Grey & Black', 'hex': '#626461'}, {'name': 'Pebble', 'hex': '#a69e90'}, {'name': 'Silver Grey', 'hex': '#b9bcb9'}, {'name': 'Tan', 'hex': '#b88c61'}, {'name': 'White', 'hex': '#fffffe'}, {'name': 'Blue', 'hex': '#497fbd'}, {'name': 'Green', 'hex': '#5f7f5a'}, {'name': 'Red', 'hex': '#be3737'}];
+const shadeHex = (hex: string, light: boolean) => '#' + [1,3,5].map(i => { const channel = parseInt(hex.slice(i,i+2),16); return Math.round(light ? channel + (255-channel)*.3 : channel*.65).toString(16).padStart(2,'0'); }).join('');
+const colourPreviewKey = (source: string, colour: string, theme = '') => JSON.stringify([source, colour.toLowerCase(), theme]);
 const toColourForm = (variant: ProductVariant, mainImage: string): ColourForm => {
   const image = variant.images?.[0] || '';
   const generated = isSofaPreviewUrl(image);
   return {
     key: variant.id, id: variant.id, range_type: variant.range_type,
     color: variant.color, color_hex: getColourHex(variant), price: String(variant.price),
-    stock: String(variant.stock), image, extraImages: variant.images?.slice(1) || [],
+    stock: '1000', image, extraImages: variant.images?.slice(1) || [],
     imageMode: generated ? 'auto' : !image || image === mainImage ? 'original' : 'custom',
     customImage: generated ? '' : image, autoName: false,
     previewKey: generated ? colourPreviewKey(mainImage, getColourHex(variant)) : '',
@@ -53,7 +45,7 @@ const toColourForm = (variant: ProductVariant, mainImage: string): ColourForm =>
   };
 };
 const previewIsReady = (variant: ColourForm, source: string) => variant.previewStatus === 'ready'
-  && variant.previewKey === colourPreviewKey(source, variant.color_hex) && isSofaPreviewUrl(variant.image);
+  && variant.previewKey === colourPreviewKey(source, variant.color_hex, variant.theme) && isSofaPreviewUrl(variant.image);
 
 function AutomaticColourPhoto({ variant, source, index, onChange }: {
   variant: ColourForm; source: string; index: number;
@@ -73,13 +65,13 @@ function AutomaticColourPhoto({ variant, source, index, onChange }: {
         }
         const response = await fetch('/api/sofa-previews/', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ source, color: colour }), signal: controller.signal,
+          body: JSON.stringify({ source, color: colour, theme: variant.theme || '' }), signal: controller.signal,
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'The colour preview could not be created. Please retry.');
         if (typeof data.url !== 'string' || !isSofaPreviewUrl(data.url)) throw new Error('The preview link could not be created. Please retry.');
         if (active) onChange(key, source, colour, {
-          image: data.url, previewKey: colourPreviewKey(source, colour), previewStatus: 'ready', previewError: '',
+          image: data.url, previewKey: colourPreviewKey(source, colour, variant.theme), previewStatus: 'ready', previewError: '',
         });
       } catch (error) {
         if (active && !controller.signal.aborted) onChange(key, source, colour, {
@@ -88,7 +80,7 @@ function AutomaticColourPhoto({ variant, source, index, onChange }: {
       }
     }, 500);
     return () => { active = false; window.clearTimeout(timeout); controller.abort(); };
-  }, [ready, source, colour, retry, key, onChange]);
+  }, [ready, source, colour, retry, key, onChange, variant.theme]);
 
   return <div className="mt-4 rounded-xl border border-blue-400/15 bg-blue-500/[0.04] p-4">
     <p className="text-xs leading-5 text-white/50">Your main sofa photograph is used to create this colour automatically.</p>
@@ -104,6 +96,8 @@ function AutomaticColourPhoto({ variant, source, index, onChange }: {
 }
 
 export default function AdminProductsPage() {
+  const [themes, setThemes] = useState<string[]>([]);
+  useEffect(() => { fetch('/api/sofa-themes/').then(r => r.json()).then(data => setThemes(data.themes || [])).catch(() => {}); }, []);
   const [products, setProducts] = useState<StoreProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -120,7 +114,7 @@ export default function AdminProductsPage() {
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/products/', { cache: 'no-store' });
+      const response = await fetch('/api/products/?includeDrafts=1', { cache: 'no-store' });
       if (!response.ok) throw new Error('Unable to load products');
       const data = await response.json();
       if (!Array.isArray(data)) throw new Error('Invalid product response');
@@ -136,7 +130,6 @@ export default function AdminProductsPage() {
   const categories = useMemo(() => ['All', ...new Set([...SOFA_CATEGORIES, ...products.map((product) => product.category)])], [products]);
   const filtered = filter === 'All' ? products : products.filter((product) => product.category === filter);
   const totalVariants = products.reduce((sum, product) => sum + (product.variants?.length || 0), 0);
-  const lowStock = products.reduce((sum, product) => sum + (product.variants?.filter((variant) => variant.stock <= 3).length || 0), 0);
 
   const announceChange = () => {
     if (typeof BroadcastChannel === 'undefined') return;
@@ -186,11 +179,15 @@ export default function AdminProductsPage() {
     setForm((current) => ({
       ...current, variants: [...current.variants, {
         key, range_type: current.category, color: suggestColourName('#d4c5a9'), color_hex: '#d4c5a9',
-        price: '', stock: current.variants[0]?.stock || '1', image: '', extraImages: [],
+        price: '', stock: '1000', image: '', extraImages: [],
         imageMode: 'auto', customImage: '', autoName: true,
         previewKey: '', previewStatus: 'pending', previewError: '', previewRetry: 0,
       }],
     }));
+  };
+  const addColourAndShow = () => {
+    addColour();
+    window.setTimeout(() => document.getElementById('product-colours')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   };
 
   const saveProduct = async () => {
@@ -208,13 +205,11 @@ export default function AdminProductsPage() {
       if (error) break;
       const label = `Colour ${index + 1}`;
       const price = variant.price.trim() ? Number(variant.price) : basePrice;
-      const stock = Number(variant.stock);
       const variantPhoto = variant.imageMode === 'original' ? mainPhoto : variant.image.trim();
       if (!variant.color.trim()) error = `${label}: enter a colour name.`;
       else if (!/^#[0-9a-f]{6}$/i.test(variant.color_hex)) error = `${label}: select a valid colour swatch.`;
       else if (!Number.isFinite(price) || price <= 0) error = `${label}: selling price must be greater than £0, or leave it blank to use the product price.`;
       else if (originalPrice != null && originalPrice <= price) error = `${label}: original price must be greater than this colour's selling price.`;
-      else if (!variant.stock.trim() || !Number.isInteger(stock) || stock < 0) error = `${label}: enter stock as a whole number of 0 or more.`;
       else if (variant.imageMode === 'auto' && !previewIsReady(variant, mainPhoto)) error = `${label}: wait for the colour preview to finish, or retry if it failed.`;
       else if (!variantPhoto) error = `${label}: add a colour photo or choose Generate from main photo.`;
       else if (!validImageSource(variantPhoto)) error = `${label}: photo must be an http(s) URL or a local path starting with /.`;
@@ -227,13 +222,13 @@ export default function AdminProductsPage() {
         method: isEditing ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: form.title.trim(), base_price: basePrice, compare_at_price: originalPrice,
-          category: form.category, description: form.description.trim(),
+          category: form.category, description: form.description.trim(), status: 'published', review_confirmed: true,
           dimensions_cm: hasDimensions ? { width: Number(form.width), depth: Number(form.depth), height: Number(form.height) } : null,
           images: [mainPhoto, ...form.extraImages],
           variants: form.variants.map((variant) => ({
             ...(variant.id ? { id: variant.id } : {}), range_type: variant.range_type,
             color: variant.color.trim(), color_hex: variant.color_hex,
-            price: variant.price.trim() ? Number(variant.price) : basePrice, stock: Number(variant.stock),
+            price: variant.price.trim() ? Number(variant.price) : basePrice, stock: Number(variant.stock || '1000'),
             images: [variant.imageMode === 'original' ? mainPhoto : variant.image.trim(), ...variant.extraImages],
           })),
         }),
@@ -269,7 +264,7 @@ export default function AdminProductsPage() {
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-        <div><h1 className="text-2xl font-light tracking-[0.15em] uppercase text-white/90">Products</h1><p className="text-xs text-white/40 mt-1">{products.length} products · {totalVariants} variants · {lowStock} low stock</p></div>
+        <div><h1 className="text-2xl font-light tracking-[0.15em] uppercase text-white/90">Products</h1><p className="text-xs text-white/40 mt-1">{products.length} sofas · {totalVariants} colour options</p></div>
         <div className="flex gap-2"><button onClick={fetchProducts} className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl text-xs transition-colors">Refresh</button><button onClick={openCreate} className="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-xl text-xs transition-colors">{showCreate ? 'Close Form' : '+ New Product'}</button></div>
       </div>
 
@@ -277,7 +272,7 @@ export default function AdminProductsPage() {
 
       {editorVisible && <form className="admin-card p-6 mb-6" noValidate onSubmit={(event) => { event.preventDefault(); saveProduct(); }}>
         <AlashiPriceRange key={editingId || form.category} rangeId={editingId ? `product:${editingId}` : `category:${form.category}`} label={editingId ? 'This sofa (overrides category)' : `${form.category} category default`}/>
-        <h2 className="text-sm font-medium tracking-[0.1em] uppercase text-white/70 mb-4">{editingId ? 'Edit Product' : 'Create New Product'}</h2>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2 className="text-sm font-medium tracking-[0.1em] uppercase text-white/70">{editingId ? 'Edit Sofa' : 'Create New Sofa'}</h2><button type="button" onClick={addColourAndShow} disabled={saving} className="rounded-xl border border-blue-300/30 bg-blue-400/10 px-4 py-2.5 text-xs font-medium text-blue-100 transition-colors hover:bg-blue-400/20">+ Add colour option</button></div>
         <div className="grid md:grid-cols-2 gap-4">
           <label className={labelClass} htmlFor="product-title">Title *<input id="product-title" value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} className={inputClass} placeholder="Product name" required /></label>
           <label className={labelClass} htmlFor="product-category">Category<select id="product-category" value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })} className={inputClass}>{SOFA_CATEGORIES.map(category => <option key={category} value={category}>{category}</option>)}</select></label>
@@ -298,12 +293,12 @@ export default function AdminProductsPage() {
           <p className="mb-3 text-xs leading-5 text-white/50">Enter verified overall sizes, including arms and the full chaise depth for corner sofas. Leave blank if unknown; customers will be asked to confirm sizes before planning.</p>
           <div className="grid gap-4 sm:grid-cols-3">{(['width', 'depth', 'height'] as const).map(key => <label key={key} className={labelClass}>{key} (cm)<input type="number" min="20" max="1000" step="0.1" value={form[key]} onChange={event => setForm(current => ({ ...current, [key]: event.target.value }))} className={inputClass} /></label>)}</div>
         </fieldset>
-        <section className="mt-6 border-t border-white/10 pt-5" aria-labelledby="product-colours-heading">
+        <section id="product-colours" className="mt-6 scroll-mt-6 rounded-2xl border border-blue-400/25 bg-blue-500/[0.05] p-4 sm:p-5" aria-labelledby="product-colours-heading">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div><h3 id="product-colours-heading" className="text-sm font-medium text-white/80">Sofa colours</h3><p className="mt-1 max-w-2xl text-xs leading-5 text-white/40">Add a colour and choose its swatch. A sofa preview and image link are created automatically from your main photograph. Only the colours you save here appear on the website.</p></div>
+            <div><h3 id="product-colours-heading" className="text-sm font-medium text-white/80">Colours for this sofa</h3><p className="mt-1 max-w-2xl text-xs leading-5 text-white/50">Add or edit the colours customers can choose on the website.</p></div>
             <button type="button" onClick={addColour} disabled={saving} className="shrink-0 rounded-xl border border-blue-400/30 bg-blue-500/15 px-4 py-2.5 text-xs font-medium text-blue-200 transition-colors hover:bg-blue-500/25 disabled:opacity-40">+ Add colour</button>
           </div>
-          {form.variants.length === 0 && <p className="mt-4 rounded-xl border border-dashed border-white/15 px-4 py-5 text-xs text-white/40">No colours added. Use Add colour to offer a colour selection for this sofa.</p>}
+          {form.variants.length === 0 && <button type="button" onClick={addColour} disabled={saving} className="mt-4 w-full rounded-xl border border-dashed border-blue-300/30 bg-blue-400/[0.06] px-4 py-5 text-left text-sm text-blue-100 transition-colors hover:bg-blue-400/[0.1]">+ Add the first colour option</button>}
           <div className="mt-4 space-y-4">
             {form.variants.map((variant, index) => <fieldset key={variant.key} disabled={saving} className="min-w-0 rounded-xl border border-white/10 bg-white/[0.025] p-4">
               <legend className="px-2 text-xs font-medium text-white/70">Colour {index + 1}{variant.color.trim() ? ` — ${variant.color}` : ''}</legend>
@@ -326,14 +321,21 @@ export default function AdminProductsPage() {
                       title={`Use ${option.name}`}
                       aria-label={`Use ${option.name}`}
                       aria-pressed={variant.color_hex.toLowerCase() === option.hex}
-                      onClick={() => changeSwatch(variant, option.hex)}
+                      onClick={() => { changeSwatch(variant, option.hex); changeColour(variant.key, { color: option.name, autoName: false }); }}
                       className={`flex h-8 items-center gap-1.5 rounded-full border px-2.5 text-[10px] normal-case tracking-normal transition-colors ${variant.color_hex.toLowerCase() === option.hex ? 'border-blue-300 bg-blue-500/20 text-blue-100' : 'border-white/10 bg-white/[0.025] text-white/55 hover:border-white/25 hover:text-white/80'}`}
                     ><span className="h-3.5 w-3.5 rounded-full border border-white/25" style={{ backgroundColor: option.hex }} aria-hidden="true" />{option.name}</button>)}
                   </div>
                 </div>
                 <div><label className={labelClass} htmlFor={`colour-${index}-price`}>Colour selling price (£)<input id={`colour-${index}-price`} type="number" min="0.01" step="0.01" inputMode="decimal" value={variant.price} onChange={(event) => changeColour(variant.key, { price: event.target.value })} className={inputClass} placeholder={form.base_price || 'Use product price'} aria-describedby={`colour-${index}-price-help`} /></label><p id={`colour-${index}-price-help`} className="mt-2 text-xs leading-4 text-white/35">Optional. Blank uses the product selling price.</p></div>
-                <label className={labelClass} htmlFor={`colour-${index}-stock`}>Stock *<input id={`colour-${index}-stock`} type="number" min="0" step="1" inputMode="numeric" value={variant.stock} onChange={(event) => changeColour(variant.key, { stock: event.target.value })} className={inputClass} required /></label>
+                <p className="self-center text-xs text-emerald-200/70">Available to order</p>
                 <div className="md:col-span-2 xl:col-span-4">
+                  <div className="mb-5">
+                    <p className={labelClass}>Colour shades</p>
+                    <div className="mt-2 flex gap-2">{[true,false].map(light => <button key={String(light)} type="button" className="rounded-lg border border-white/25 bg-slate-800 px-4 py-2 text-xs text-white" onClick={() => { const base = colourOptions.find(option => variant.color.replace(/^(Light|Dark) /, '') === option.name) || { name: variant.color.replace(/^(Light|Dark) /, ''), hex: variant.color_hex }; changeSwatch(variant, shadeHex(base.hex, light)); changeColour(variant.key, { color: `${light ? 'Light' : 'Dark'} ${base.name}`, autoName: false }); }}>{light ? 'Light shade' : 'Dark shade'}</button>)}</div>
+                    <label className={`mt-4 block ${labelClass}`}>Room theme for this colour<select value={variant.theme || ''} className={inputClass} onChange={event => changeColour(variant.key, { theme: event.target.value, imageMode: 'auto', previewKey: '', previewStatus: 'pending' })}><option value="">Keep original background</option>{themes.map(theme => <option key={theme} value={theme}>{theme.replace(/\.[^.]+$/, '')}</option>)}</select></label>
+                    {variant.theme && <img src={`/api/sofa-themes/?file=${encodeURIComponent(variant.theme)}`} alt="Selected room background" className="mt-3 h-32 w-44 rounded-xl object-cover" />}
+                    <p className="mt-2 text-xs text-white/60">Existing folder backgrounds. Each colour can have its own room theme.</p>
+                  </div>
                   <fieldset>
                     <legend className={labelClass}>Sofa image</legend>
                     <div className="mt-2 flex flex-wrap gap-2">
@@ -368,7 +370,7 @@ export default function AdminProductsPage() {
       : <div className="admin-table overflow-x-auto"><table className="w-full"><thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Variants</th><th>Stock</th><th>Actions</th></tr></thead><tbody>{filtered.map((product) => <tr key={product.id}>
         <td><div className="flex items-center gap-3"><LazyImage src={product.images?.[0] || sofaImageForCategory(product.category)} alt={product.title} className="w-12 h-12 rounded-xl flex-none" imgClassName="rounded-xl" /><div><p className="text-sm text-white/80 font-medium">{product.title}</p><p className="text-[10px] text-white/30">{product.id.slice(0, 8)}...</p></div></div></td>
         <td><span className="admin-badge admin-badge-gold">{product.category}</span></td><td><span className="text-white/70">{formatProductPrice(product.base_price)}</span>{getSavings(product.base_price, product.compare_at_price) > 0 && <span className="mt-1 block text-[10px] text-emerald-300">Save {formatProductPrice(getSavings(product.base_price, product.compare_at_price))}</span>}</td><td className="text-white/40">{product.variants?.length || 0}</td>
-        <td>{product.variants?.some((variant) => variant.stock <= 3) ? <span className="admin-badge admin-badge-amber">Low Stock</span> : <span className="admin-badge admin-badge-green">In Stock</span>}</td>
+        <td><span className="admin-badge admin-badge-green">Available</span></td>
         <td><div className="flex gap-2"><button onClick={() => openEdit(product)} className="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-1.5 rounded-lg text-[10px] uppercase font-bold">Edit</button><button onClick={() => deleteProduct(product)} disabled={deletingId === product.id} className="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-[10px] uppercase font-bold disabled:opacity-40">{deletingId === product.id ? 'Deleting' : 'Delete'}</button></div></td>
       </tr>)}</tbody></table></div>}
     </div>

@@ -20,8 +20,6 @@ export async function GET() {
         orders: orders.length,
         pendingAppointments: 0,
         pendingSwatches: 0,
-        lowStockProducts: products.reduce((count, product) =>
-          count + product.variants.filter((variant) => variant.stock <= 3).length, 0),
       }, { headers: { 'Cache-Control': 'no-store, max-age=0' } });
     }
 
@@ -31,10 +29,9 @@ export async function GET() {
       sql`SELECT COUNT(*) as count FROM appointments`,
     ]);
 
-    const [pendingAppointments, pendingSwatches, lowStockProducts] = await Promise.all([
+    const [pendingAppointments, pendingSwatches] = await Promise.all([
       sql`SELECT COUNT(*) as count FROM appointments WHERE status = 'pending'`,
       sql`SELECT COUNT(*) as count FROM swatch_requests WHERE status = 'pending'`,
-      sql`SELECT COUNT(*) as count FROM product_variants WHERE stock <= 3`,
     ]);
 
     return NextResponse.json({
@@ -44,7 +41,6 @@ export async function GET() {
       orders: 0,
       pendingAppointments: parseInt(pendingAppointments[0]?.count || '0'),
       pendingSwatches: parseInt(pendingSwatches[0]?.count || '0'),
-      lowStockProducts: parseInt(lowStockProducts[0]?.count || '0'),
     });
   } catch (error) {
     console.error('Error fetching admin stats:', error);
@@ -56,8 +52,6 @@ export async function GET() {
       orders: orders.length,
       pendingAppointments: 0,
       pendingSwatches: 0,
-      lowStockProducts: products.reduce((count, product) =>
-        count + product.variants.filter((variant) => variant.stock <= 3).length, 0),
     }, { headers: { 'Cache-Control': 'no-store, max-age=0' } });
   }
 }

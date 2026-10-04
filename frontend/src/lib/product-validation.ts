@@ -38,6 +38,7 @@ function imageList(value: unknown, label: string): string[] {
 export function validateProductInput(input: unknown, existing?: StoreProduct): Omit<StoreProduct, 'id' | 'slug'> {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return fail('Product details are required.');
   const body = input as Record<string, unknown>;
+  const status = 'published';
   const title = typeof body.title === 'string' ? body.title.trim() : '';
   if (!title || title.length > 200) return fail('Enter a product title of up to 200 characters.');
   const base_price = amount(body.base_price, 'Selling price');
@@ -63,7 +64,7 @@ export function validateProductInput(input: unknown, existing?: StoreProduct): O
 
   let variants: ProductVariant[];
   if (body.variants === undefined) {
-    variants = (existing?.variants || []).map((variant) => ({ ...variant,
+    variants = (existing?.variants || []).map((variant) => ({ ...variant, stock: 1000,
       price: Number(variant.price) === Number(existing?.base_price) ? base_price : Number(variant.price),
     }));
   } else {
@@ -91,23 +92,24 @@ export function validateProductInput(input: unknown, existing?: StoreProduct): O
         return fail(`${color}: enter a valid six-digit colour code.`);
       }
       const price = amount(entry.price === undefined ? base_price : entry.price, `${color} selling price`);
-      const stock = Number(entry.stock);
-      if ((typeof entry.stock !== 'number' && typeof entry.stock !== 'string') || String(entry.stock).trim() === '' || !Number.isInteger(stock) || stock < 0 || stock > 1000000) {
-        return fail(`${color}: stock must be a whole number between 0 and 1,000,000.`);
-      }
+      const stock = 1000;
       const variantImages = imageList(entry.images ?? previous?.images ?? [], `${color} photos`);
       if (!variantImages.length && !previous) {
         return fail(`${color}: add a photo showing this sofa in this colour.`);
       }
       return { id, range_type, color, color_hex, price, stock, images: variantImages,
         sku: previous?.sku || `SOFA-${id}`,
+        ...(previous?.source_variant_id != null ? { source_variant_id: previous.source_variant_id } : {}),
       };
     });
   }
   if (compare_at_price !== null && compare_at_price <= Math.max(base_price, ...variants.map((variant) => Number(variant.price)))) {
     return fail('Original price must be higher than the selling price of every colour. Leave it blank for no discount.');
   }
-  return { title, description, base_price, compare_at_price, category, dimensions_cm,
+  const categories = [...new Set([category, ...(existing?.categories || []).filter(value => value !== existing?.category)])];
+  return { title, description, base_price, compare_at_price, category, categories, dimensions_cm, status,
+    review_flags: [],
+    stock_confirmation_required: false,
     images: images.length ? images : [sofaImageForCategory(category)], variants,
   };
 }

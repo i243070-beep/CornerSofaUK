@@ -10,6 +10,7 @@ import {
 import styles from './admin-shell.module.css';
 
 const NAV = [
+  { href: '/admin/builder', label: 'Sofa Builder', icon: Armchair },
   { href: '/admin/alashi', label: 'ALASHI AI', icon: Palette },
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/products', label: 'Products', icon: Armchair },
@@ -21,6 +22,7 @@ const NAV = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [authenticated, setAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loggingIn, setLoggingIn] = useState(false);
@@ -48,7 +50,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       const res = await fetch('/api/admin/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ username, password }),
       });
       const data = await res.json();
 
@@ -109,16 +111,32 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <p className={styles.authDescription}>Sign in to your Corner Sofa workspace.</p>
 
           <form onSubmit={handleLogin} className={styles.authForm}>
+            <label htmlFor="admin-username">Admin username</label>
+            <div className={styles.inputWrap}>
+              <Armchair size={17} aria-hidden="true" />
+              <input
+                id="admin-username"
+                name="username"
+                type="text"
+                autoComplete="username"
+                placeholder="Enter your username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+              />
+            </div>
             <label htmlFor="admin-password">Admin password</label>
             <div className={styles.inputWrap}>
               <LockKeyhole size={17} aria-hidden="true" />
               <input
                 id="admin-password"
+                name="password"
                 type="password"
                 autoComplete="current-password"
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                required
                 aria-describedby={error ? 'admin-login-error' : undefined}
                 aria-invalid={Boolean(error)}
               />

@@ -3,20 +3,21 @@ import type { neon } from '@neondatabase/serverless';
 import { isDatabaseConfigured, sql } from './db';
 import { createLocalProduct, getLocalProduct, getLocalProducts, updateLocalProduct } from './local-products';
 import { ensureLocalProductImages } from './product-images';
+import { applyProductRoomImages } from './product-room-images';
 import { validateProductInput } from './product-validation';
 import type { StoreProduct } from './product-options';
 
 function normaliseProduct(product: StoreProduct): StoreProduct {
-  return ensureLocalProductImages({ ...product,
+  return applyProductRoomImages(ensureLocalProductImages({ ...product, status: 'published', review_flags: [], stock_confirmation_required: false,
     base_price: Number(product.base_price),
     compare_at_price: product.compare_at_price == null ? null : Number(product.compare_at_price),
     variants: (product.variants || []).filter((variant) => variant?.id).map((variant) => ({
-      ...variant, price: Number(variant.price), stock: Number(variant.stock), images: variant.images || [],
+      ...variant, price: Number(variant.price), stock: 1000, images: variant.images || [],
     })),
-  });
+  }));
 }
 
-export async function listProducts(): Promise<StoreProduct[]> {
+export async function listProducts({ includeDrafts = false }: { includeDrafts?: boolean } = {}): Promise<StoreProduct[]> {
   if (!isDatabaseConfigured) return (await getLocalProducts()).map(normaliseProduct);
   // JSON extraction keeps reads compatible with databases awaiting the additive migration.
   const products = await sql`
@@ -29,7 +30,7 @@ export async function listProducts(): Promise<StoreProduct[]> {
   return products.map((product) => normaliseProduct(product as StoreProduct));
 }
 
-export async function findProduct(id: string): Promise<StoreProduct | undefined> {
+export async function findProduct(id: string, { includeDrafts = false }: { includeDrafts?: boolean } = {}): Promise<StoreProduct | undefined> {
   if (!isDatabaseConfigured) {
     const product = await getLocalProduct(id);
     return product ? normaliseProduct(product) : undefined;
@@ -45,7 +46,7 @@ export async function findProduct(id: string): Promise<StoreProduct | undefined>
 }
 
 export async function saveProduct(input: unknown, id?: string): Promise<StoreProduct | undefined> {
-  const existing = id ? await findProduct(id) : undefined;
+  const existing = id ? await findProduct(id, { includeDrafts: true }) : undefined;
   if (id && !existing) return undefined;
   const data = validateProductInput(input, existing);
   const slug = existing?.slug || `${data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}-${randomUUID().slice(0, 8)}`;
@@ -70,6 +71,9 @@ export async function saveProduct(input: unknown, id?: string): Promise<StorePro
   const variantJson = JSON.stringify(data.variants);
   await db.transaction([
     productQuery,
+    db`UPDATE products SET status=${data.status || 'published'}, categories=${data.categories || [data.category]},
+      review_flags=${data.review_flags || []}, stock_confirmation_required=${data.stock_confirmation_required || false}
+      WHERE id=${productId}`,
     ...(data.dimensions_cm || existing?.dimensions_cm ? [db`UPDATE products SET dimensions_cm=${JSON.stringify(data.dimensions_cm)}::jsonb WHERE id=${productId}`] : []),
     db`DELETE FROM product_variants WHERE product_id=${productId}
       AND id NOT IN (SELECT (value->>'id')::uuid FROM jsonb_array_elements(${variantJson}::jsonb))`,
@@ -82,5 +86,5 @@ export async function saveProduct(input: unknown, id?: string): Promise<StorePro
         color=EXCLUDED.color, color_hex=EXCLUDED.color_hex, stock=EXCLUDED.stock, images=EXCLUDED.images
       WHERE product_variants.product_id=${productId}`,
   ]);
-  return findProduct(productId);
+  return findProduct(productId, { includeDrafts: true });
 }

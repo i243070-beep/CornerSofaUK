@@ -37,15 +37,15 @@ export async function handleAlashi(request:Request){
       const facts=data.find(r=>r.id===`facts:${product.id}`&&r.kind==='facts')?.value as ProductFacts|undefined;
       return {id:product.id,title:product.title,description:product.description,category:product.category,dimensions:product.dimensions_cm,
         image:quote.variant?.images?.[0]||product.images[0],images:[...new Set([...product.images,...product.variants.flatMap(v=>v.images||[])])].slice(0,12),
-        colours:product.variants.map(v=>({colour:v.color,available:v.stock>0,id:v.id})),materials:facts?.materials||'',warranty:facts?.warranty||'',colourNotes:facts?.colours||'',
-        price:quote.price,range:quote.range,variantId:quote.variant?.id||'',colour:quote.variant?.color||'',range_type:quote.variant?.range_type||product.category,available:!!quote.variant&&quote.variant.stock>0,offerToken:quote.offerToken};
+        colours:product.variants.map(v=>({colour:v.color,available:true,id:v.id})),materials:facts?.materials||'',warranty:facts?.warranty||'',colourNotes:facts?.colours||'',
+        price:quote.price,range:quote.range,variantId:quote.variant?.id||'',colour:quote.variant?.color||'',range_type:quote.variant?.range_type||product.category,available:!!quote.variant,offerToken:quote.offerToken};
     };
     if(!generate){
       if(intent==='greeting')answer=/how are (you|u)|how.s it going|you good/i.test(message)?'I am fine, thank you!':(previous?.turn||0)%2?'Hello again. What would you like to know?':'Hello! What can I help you with today?';
       if(intent==='thanks')answer=(previous?.turn||0)%2?'Happy to help.':'You are welcome.';
-      if(intent==='identity'){answer=/samiullah.*(right|owner)|owner.*right/i.test(message)?"Yes, that's right. Samiullah is the owner.":courtesy(message)||'Samiullah owns Corner Sofa UK. I am ALASHI, the AI assistant for his team.';}
+      if(intent==='identity'){answer=/samiullah.*(right|owner)|owner.*right/i.test(message)?"Yes, that's right. Samiullah is the owner.":courtesy(message)||'Samiullah owns Corner Sofa UK. I am HELPER, the AI assistant for his team.';}
       if(intent==='identity'&&/your (goal|purpose|aim)/i.test(message))answer='My goal is to assist you and help you shop on our website.';
-      if(intent==='identity'&&/(who is|tell me about) samiullah/i.test(message))answer='Samiullah is the owner of ALASHI and comes from Murree. He describes himself as humble and dreams of becoming a trillionaire.';
+      if(intent==='identity'&&/(who is|tell me about) samiullah/i.test(message))answer='Samiullah is the owner of HELPER and comes from Murree. He describes himself as humble and dreams of becoming a trillionaire.';
       if(intent==='identity'&&/\b(ibrahim|zubair|tawassul|dani)\b/i.test(message))answer='I do not have a verified introduction for him. I can share a friendly introduction if he provides one.';
       if(intent==='offtopic')answer='I can help with sofas and Corner Sofa orders. For a business partnership, please contact Samiullah directly.';
       if(intent==='unclear')answer='Could you explain a little more so I can help with the right question?';
@@ -100,7 +100,7 @@ export async function handleAlashi(request:Request){
       else if(/material|made of|leather|fabric|velvet/i.test(message))answer=p.materials||`Here are the current product details: ${p.description}`;
       if(/size|dimension/i.test(message)&&!p.dimensions)needsOwner=true;
     }
-    if(!answer&&/owner|who (are you|owns)|about (you|company)|tell.*company/i.test(message)){answer='Corner Sofa UK is a UK-based made-to-order sofa business led by Samiullah, who has 10 years of furniture experience. I’m ALASHI, the team’s AI sofa assistant.';selected=[];}
+    if(!answer&&/owner|who (are you|owns)|about (you|company)|tell.*company/i.test(message)){answer='Corner Sofa UK is a UK-based made-to-order sofa business led by Samiullah, who has 10 years of furniture experience. I’m HELPER, the team’s AI sofa assistant.';selected=[];}
     if(!answer&&negotiate){const p=selected[0];const q=p?expose(p):undefined;const old=p?(previous?.offers?.[p.id]??quoteProduct(p,data).price):0;answer=q?(q.price<old?'I can reduce this sofa to {{price:'+p.id+'}} (VAT included).':'The current price is {{price:'+p.id+'}} (VAT included); I cannot reduce it further.'): 'Which sofa would you like a price for? Please choose a shape or name so I can check its current offer.';}
     if(!answer&&process.env.OPENAI_API_KEY){
       try{
@@ -133,5 +133,5 @@ export async function handleAlashi(request:Request){
     const offers={...(previous?.offers||{})};for(const p of cards)offers[p.id]=p.price;
     const context=signAlashi({type:'conversation',selected:cards.length?cards.map(p=>p.id):previous?.selected||[],shown:[...new Set([...(previous?.shown||[]),...cards.map(p=>p.id)])].slice(-50),offers,query:categoryIntent(message)||generate?message:previous?.query||message,imageHash,stage,turn:(previous?.turn||0)+1,lastAnswer:answer,colour:cards[0]?.colour||previous?.colour});
     return NextResponse.json({answer,products:cards,context,actions,image,order,needsOwner,limited:!process.env.OPENAI_API_KEY||providerError});
-  }catch(error){return NextResponse.json({error:error instanceof Error?error.message:'ALASHI could not complete the request.'},{status:400});}
+  }catch(error){return NextResponse.json({error:error instanceof Error?error.message:'HELPER could not complete the request.'},{status:400});}
 }

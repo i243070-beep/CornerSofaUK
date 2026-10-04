@@ -1,18 +1,18 @@
 const { chromium, expect } = require('@playwright/test');
 const base = process.env.TEST_BASE_URL || 'http://localhost:3100';
-const categories = ['2-Seater', '3-Seater', 'Corner', 'U-Shape', 'Recliner', 'Sofa Bed'];
+const categories = ['2-Seater', '3-Seater', 'Corner', 'U-Shape', 'Recliner', 'Sofa Bed', 'Sofa Sets', 'Armchairs', 'Footstools'];
 let browser;
 (async () => {
   browser = await chromium.launch({ channel: 'chrome', headless: true });
   const page = await browser.newPage();
   // Isolated catalogue fixtures: no real products or authentication records are changed.
-  await page.route(/\/api\/products\/?$/, route => route.fulfill({ json: categories.map((category, index) => ({
+  await page.route(/\/api\/products\/?(?:\?includeDrafts=1)?$/, route => route.fulfill({ json: categories.map((category, index) => ({
     id: `fixture-${index}`, slug: `fixture-${index}`, title: `Fixture ${category}`, category,
     description: 'Category verification', base_price: 500, images: ['/images/sofas/premium-sofa-bed.webp'], variants: [],
   })) }));
   for (const category of ['U-Shape', 'Sofa Bed']) {
     await page.goto(`${base}/products/?category=${encodeURIComponent(category)}`, { waitUntil: 'networkidle' });
-    await expect(page.getByRole('button', { name: `${category} sofas`, exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('button', { name: category === 'Sofa Bed' ? 'Sofa beds' : `${category} sofas`, exact: true })).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByRole('heading', { name: `Fixture ${category}`, exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Fixture 2-Seater', exact: true })).toHaveCount(0);
   }

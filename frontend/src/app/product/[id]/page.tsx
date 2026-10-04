@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronLeft, ChevronRight, Layers3, Ruler, ShieldCheck, ShoppingBag, Sofa, Truck } from 'lucide-react';
 import SwatchRequestModal from '@/components/SwatchRequestModal';
@@ -14,6 +14,7 @@ import { useCart } from '@/context/CartContext';
 import { generateProductSchema, generateBreadcrumbSchema } from '@/lib/schema';
 import { ensureLocalProductImages } from '@/lib/product-images';
 import { isSofaPreviewUrl } from '@/lib/sofa-preview';
+import { originalProductImage } from '@/lib/product-room-images';
 import { formatProductPrice, getColourHex, getDefaultVariant, getProductPrice, getSavings, getVariantImages, type ProductVariant, type StoreProduct } from '@/lib/product-options';
 
 const PRODUCT_CATEGORIES = [
@@ -32,6 +33,7 @@ export default function ProductDetailPage() {
 }
 
 function ProductDetailContent() {
+  const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
   const requestedVariantId = searchParams.get('variant');
@@ -107,7 +109,7 @@ function ProductDetailContent() {
   }, [addedToCart]);
 
   const quantityInBasket = items.find((item) => item.productId === product?.id && item.variantId === selectedVariant?.id)?.quantity ?? 0;
-  const canAddToCart = !!selectedVariant && selectedVariant.stock > quantityInBasket;
+  const canAddToCart = !!selectedVariant && quantityInBasket < 10;
 
   const handleAddToCart = () => {
     if (!product || !selectedVariant || !canAddToCart) return;
@@ -121,6 +123,7 @@ function ProductDetailContent() {
       title: product.title,
     });
     setAddedToCart(true);
+    router.push('/cart');
   };
 
   if (loading) {
@@ -149,10 +152,11 @@ function ProductDetailContent() {
   const changeImage = (direction: number) => setSelectedImage((current) => (current + direction + galleryImages.length) % galleryImages.length);
 
   return (
-    <div className="bg-[#faf9f6] pb-20 pt-6 text-[#26352e] md:pb-28 md:pt-8">
+    <div className="product-detail-page bg-[#faf9f6] pb-20 pt-6 text-[#26352e] md:pb-28 md:pt-8">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(generateProductSchema({
         title: product.title, description: product.description || '', images: galleryImages,
         base_price: currentPrice, id: product.id,
+        in_stock: !!selectedVariant, availability_unknown: false,
       })).replace(/</g, '\\u003c') }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(generateBreadcrumbSchema([
         { name: 'Home', url: '/' },
@@ -176,7 +180,7 @@ function ProductDetailContent() {
           <div className="min-w-0 lg:sticky lg:top-28">
             <div className="group relative aspect-[4/3] overflow-hidden rounded-[24px] bg-[#eeece5] md:rounded-[32px]">
               <motion.div key={`${selectedVariant?.id}-${galleryIndex}`} initial={{ opacity: reduceMotion ? 1 : 0.65 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }} className="absolute inset-0">
-                <Image src={galleryImages[galleryIndex]} alt={`${imageDescription}${galleryImages.length > 1 ? `, view ${galleryIndex + 1}` : ''}`} fill priority sizes="(min-width: 1440px) 700px, (min-width: 1024px) 55vw, 100vw" className="object-cover" />
+                <Image src={galleryImages[galleryIndex]} alt={`${imageDescription}${galleryImages.length > 1 ? `, view ${galleryIndex + 1}` : ''}`} fill priority sizes="(min-width: 1440px) 700px, (min-width: 1024px) 55vw, 100vw" className="object-contain" />
               </motion.div>
               <span className="absolute left-5 top-5 rounded-full border border-white/60 bg-white/[0.65] px-4 py-2 text-xs backdrop-blur-xl">{savings > 0 ? `${Math.round(savings / Number(product.compare_at_price) * 100)}% OFF` : `${product.category} collection`}</span>
               <TrySofaButton productId={product.id} variantId={selectedVariant?.id} title={product.title} />
@@ -198,7 +202,7 @@ function ProductDetailContent() {
               </div>
             )}
             <p className="mt-5 flex items-center gap-2 text-xs leading-5 text-[#687168]"><Layers3 size={15} className="shrink-0" aria-hidden="true" /> Get to know the finish. Try free fabric samples at home.</p>
-            {isSofaPreviewUrl(galleryImages[galleryIndex]) && <p className="mt-2 text-xs leading-5 text-[#687168]">Colour preview. Actual fabric may vary; order a free swatch to check the finish.</p>}
+            {isSofaPreviewUrl(originalProductImage(galleryImages[galleryIndex])) && <p className="mt-2 text-xs leading-5 text-[#687168]">Colour preview. Actual fabric may vary; order a free swatch to check the finish.</p>}
           </div>
 
           <motion.div initial={{ opacity: 1, y: reduceMotion ? 0 : 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}>
@@ -211,9 +215,9 @@ function ProductDetailContent() {
                 <p className="text-2xl font-medium tracking-tight"><span className="sr-only">Price </span>{formatProductPrice(currentPrice)}</p>
                 {savings > 0 && <p className="mt-1 text-sm font-semibold text-[#53674c]">Save {formatProductPrice(savings)}</p>}
               </div>
-              <p className={`flex items-center gap-2 text-xs ${selectedVariant && selectedVariant.stock > 0 ? 'text-[#53674c]' : 'text-[#77665c]'}`}>
-                <span aria-hidden="true" className={`size-1.5 rounded-full ${selectedVariant && selectedVariant.stock > 0 ? 'bg-[#65745d]' : 'bg-[#a68e7f]'}`} />
-                {selectedVariant ? selectedVariant.stock > 0 ? selectedVariant.stock <= 3 ? `${selectedVariant.stock} available` : 'In stock' : 'Currently out of stock' : 'Currently unavailable'}
+              <p className={`flex items-center gap-2 text-xs ${selectedVariant ? 'text-[#53674c]' : 'text-[#77665c]'}`}>
+                <span aria-hidden="true" className={`size-1.5 rounded-full ${selectedVariant ? 'bg-[#65745d]' : 'bg-[#a68e7f]'}`} />
+                {selectedVariant ? 'Available to order' : 'Currently unavailable'}
               </p>
             </div>
             {product.description && <p className="mt-6 text-sm leading-7 text-[#687168]">{product.description}</p>}
@@ -226,9 +230,9 @@ function ProductDetailContent() {
                     const selected = selectedVariant?.id === variant.id;
                     const preview = getColourHex(variant);
                     return (
-                      <button type="button" key={variant.id} onClick={() => { setSelectedVariant(variant); setSelectedImage(0); setAddedToCart(false); }} aria-pressed={selected} aria-label={`${variant.color}, ${variant.range_type}${variant.stock <= 0 ? ', out of stock' : ''}`} className={`flex min-h-12 items-center gap-2.5 rounded-xl border px-3.5 py-3 text-sm transition-colors ${selected ? 'border-[#65745d] bg-[#65745d]/[0.08] text-[#26352e]' : 'border-[#26352e]/10 bg-white/70 text-[#687168] hover:border-[#65745d]/60'}`}>
+                      <button type="button" key={variant.id} onClick={() => { setSelectedVariant(variant); setSelectedImage(0); setAddedToCart(false); }} aria-pressed={selected} aria-label={`${variant.color}, ${variant.range_type}`} className={`flex min-h-12 items-center gap-2.5 rounded-xl border px-3.5 py-3 text-sm transition-colors ${selected ? 'border-[#65745d] bg-[#65745d]/[0.08] text-[#26352e]' : 'border-[#26352e]/10 bg-white/70 text-[#687168] hover:border-[#65745d]/60'}`}>
                         {preview && <span aria-hidden="true" className="size-5 shrink-0 rounded-full border border-black/10 shadow-inner" style={{ backgroundColor: preview }} />}
-                        <span className={variant.stock <= 0 ? 'line-through' : ''}>{variant.color}{product.variants.some((item) => item.range_type !== variant.range_type) && <span className="block text-[11px]">{variant.range_type}</span>}</span>
+                        <span>{variant.color}{product.variants.some((item) => item.range_type !== variant.range_type) && <span className="block text-[11px]">{variant.range_type}</span>}</span>
                         {selected && <Check size={14} aria-hidden="true" />}
                       </button>
                     );
@@ -236,12 +240,12 @@ function ProductDetailContent() {
                 </div>
                 {product.variants.length === 0 && <p className="text-sm text-[#687168]">Contact our team for available configurations.</p>}
               </fieldset>
-              <button type="button" onClick={() => setShowSwatchModal(true)} className="mt-4 flex min-h-11 items-center gap-2 text-xs font-medium underline decoration-[#65745d]/30 underline-offset-4 transition-colors hover:text-[#65745d]"><Layers3 size={15} aria-hidden="true" /> Feel it first. Order free swatches <ArrowRight size={14} aria-hidden="true" /></button>
-              <button type="button" onClick={handleAddToCart} disabled={!canAddToCart || addedToCart} className="mt-5 flex min-h-14 w-full items-center justify-center gap-3 rounded-full bg-[#26352e] px-5 py-4 text-sm font-medium text-white transition-colors hover:bg-[#3c4d40] disabled:cursor-not-allowed disabled:opacity-50">
+              <Link href={`/build/?product=${product.id}&variant=${selectedVariant?.id || ""}`} className="mt-4 flex min-h-12 items-center justify-between rounded-xl border border-[#a7b590] bg-[#edf2e3] px-4 text-sm font-semibold text-[#344536]">Build this sofa <ArrowRight size={16} /></Link><button type="button" onClick={() => setShowSwatchModal(true)} className="mt-4 flex min-h-11 items-center gap-2 text-xs font-medium underline decoration-[#65745d]/30 underline-offset-4 transition-colors hover:text-[#65745d]"><Layers3 size={15} aria-hidden="true" /> Feel it first. Order free swatches <ArrowRight size={14} aria-hidden="true" /></button>
+              {(addedToCart || quantityInBasket > 0) ? <Link href="/cart" className="mt-5 flex min-h-14 w-full items-center justify-center gap-3 rounded-full bg-[#26352e] px-5 py-4 text-base font-semibold text-white shadow-lg transition-colors hover:bg-[#3c4d40]"><ShoppingBag size={20} aria-hidden="true" />View basket <ArrowRight size={20} aria-hidden="true" /></Link> : <button type="button" onClick={handleAddToCart} disabled={!canAddToCart || addedToCart} className="mt-5 flex min-h-14 w-full items-center justify-center gap-3 rounded-full bg-[#26352e] px-5 py-4 text-sm font-medium text-white transition-colors hover:bg-[#3c4d40] disabled:cursor-not-allowed disabled:opacity-50">
                 {addedToCart ? <Check size={18} aria-hidden="true" /> : <ShoppingBag size={18} aria-hidden="true" />}
-                {addedToCart ? 'Added to your basket' : canAddToCart ? 'Add to basket' : selectedVariant && selectedVariant.stock > 0 ? 'Available quantity in your basket' : 'Currently unavailable'}
+                {addedToCart ? 'Added to your basket' : canAddToCart ? 'Add to basket' : 'Basket limit reached'}
                 {canAddToCart && !addedToCart && <span className="ml-auto border-l border-white/25 pl-4">{formatProductPrice(currentPrice)}</span>}
-              </button>
+              </button>}
               <div aria-live="polite" aria-atomic="true">
                 {(addedToCart || quantityInBasket > 0) && <p className="mt-3 text-center text-xs leading-5 text-[#687168]">{addedToCart ? `${selectedVariant?.color} added. ` : `${quantityInBasket} in your basket. `}<Link href="/cart" className="font-medium text-[#26352e] underline underline-offset-4">View basket</Link></p>}
               </div>
@@ -257,6 +261,8 @@ function ProductDetailContent() {
                 <summary className="flex min-h-7 cursor-pointer list-none items-center justify-between text-sm font-medium [&::-webkit-details-marker]:hidden">The details <ChevronDown size={16} aria-hidden="true" className="transition-transform group-open:rotate-180" /></summary>
                 <dl className="mt-4 space-y-3 text-sm">
                   <div className="flex justify-between gap-6"><dt className="text-[#687168]">Collection</dt><dd>{product.category}</dd></div>
+                  {product.materials?.length ? <div className="flex justify-between gap-6"><dt className="text-[#687168]">Upholstery</dt><dd className="text-right">{product.materials.join(', ')}</dd></div> : null}
+                  {Object.entries(product.specifications || {}).filter(([key]) => !/source|colour|color|material/i.test(key)).map(([key, value]) => <div className="flex justify-between gap-6" key={key}><dt className="text-[#687168]">{key}</dt><dd className="max-w-[65%] text-right">{Array.isArray(value) ? value.join(', ') : value}</dd></div>)}
                   {selectedVariant && <><div className="flex justify-between gap-6"><dt className="text-[#687168]">Configuration</dt><dd className="text-right">{selectedVariant.range_type}</dd></div><div className="flex justify-between gap-6"><dt className="text-[#687168]">Colour</dt><dd>{selectedVariant.color}</dd></div></>}
                 </dl>
               </details>
@@ -280,7 +286,7 @@ function ProductDetailContent() {
               <div><p className="mb-3 text-[11px] font-medium uppercase tracking-[0.2em] text-[#65745d]">Keep exploring</p><h2 id="related-products" className="font-serif text-3xl tracking-[-0.025em] md:text-4xl">More room to fall in love.</h2></div>
               <Link href={`/products?category=${encodeURIComponent(product.category)}`} className="flex min-h-11 items-center gap-2 text-sm">Shop the collection <ArrowRight size={17} aria-hidden="true" /></Link>
             </div>
-            <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 2xl:grid-cols-4">
               {relatedProducts.map((item) => <ProductCard key={item.id} id={item.id} title={item.title} image={item.images[0]} newPrice={getProductPrice(item)} oldPrice={item.compare_at_price ?? undefined} variants={item.variants} category={item.category} badge="" />)}
             </div>
           </section>

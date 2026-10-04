@@ -3,16 +3,17 @@ import { ADMIN_SESSION_COOKIE, ADMIN_SESSION_MAX_AGE, createAdminSession, verify
 
 export async function POST(request: NextRequest) {
   try {
+    const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
     const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
-    if (!ADMIN_PASSWORD) return NextResponse.json({ error: 'Admin login is not configured' }, { status: 503 });
-    const { password } = await request.json();
+    if (!ADMIN_USERNAME || !ADMIN_PASSWORD) return NextResponse.json({ error: 'Admin login is not configured' }, { status: 503 });
+    const { username, password } = await request.json();
 
-    if (typeof password !== 'string' || !password) {
-      return NextResponse.json({ error: 'Password required' }, { status: 400 });
+    if (typeof username !== 'string' || !username || typeof password !== 'string' || !password) {
+      return NextResponse.json({ error: 'Username and password required' }, { status: 400 });
     }
 
-    if (password !== ADMIN_PASSWORD) {
-      return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
+    if (username !== ADMIN_USERNAME || password !== ADMIN_PASSWORD) {
+      return NextResponse.json({ error: 'Invalid username or password' }, { status: 401 });
     }
 
     const session = createAdminSession();

@@ -7,6 +7,7 @@ export interface ProductVariant {
   color_hex?: string | null;
   images?: string[];
   sku?: string;
+  source_variant_id?: string | number;
 }
 
 export interface StoreProduct {
@@ -18,6 +19,17 @@ export interface StoreProduct {
   compare_at_price?: number | null;
   images: string[];
   category: string;
+  categories?: string[];
+  status?: 'published' | 'draft';
+  price_type?: 'base' | 'fixed' | 'from';
+  review_flags?: string[];
+  source_site?: string;
+  source_product_id?: string | number;
+  source_url?: string;
+  specifications?: Record<string, string | string[]>;
+  features?: string[];
+  materials?: string[];
+  stock_confirmation_required?: boolean;
   dimensions_cm?: { width: number; depth: number; height: number } | null;
   variants: ProductVariant[];
 }
@@ -36,8 +48,7 @@ export function getColourHex(variant: Pick<ProductVariant, 'color' | 'color_hex'
 }
 
 export function getDefaultVariant(variants: ProductVariant[] = []) {
-  const available = variants.filter((variant) => variant.stock > 0);
-  return (available.length ? available : variants).reduce<ProductVariant | undefined>(
+  return variants.reduce<ProductVariant | undefined>(
     (best, variant) => !best || Number(variant.price) < Number(best.price) ? variant : best, undefined,
   );
 }

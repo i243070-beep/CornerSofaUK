@@ -7,9 +7,9 @@ import ProductCard from '@/components/ui/ProductCard';
 import { ensureLocalProductImages } from '@/lib/product-images';
 import { getProductPrice, type StoreProduct } from '@/lib/product-options';
 
-export default function HomeProductSections() {
-  const [products, setProducts] = useState<StoreProduct[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function HomeProductSections({ initialProducts }: { initialProducts?: StoreProduct[] }) {
+  const [products, setProducts] = useState<StoreProduct[]>(initialProducts || []);
+  const [loading, setLoading] = useState(!initialProducts);
   const [error, setError] = useState(false);
 
   const loadProducts = useCallback(async () => {
@@ -28,7 +28,7 @@ export default function HomeProductSections() {
   }, []);
 
   useEffect(() => {
-    loadProducts();
+    if (!initialProducts) loadProducts();
     const channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('corner-sofa-products') : null;
     channel?.addEventListener('message', loadProducts);
     window.addEventListener('focus', loadProducts);
@@ -36,7 +36,7 @@ export default function HomeProductSections() {
       channel?.close();
       window.removeEventListener('focus', loadProducts);
     };
-  }, [loadProducts]);
+  }, [loadProducts, initialProducts]);
 
   const visible = products.slice(0, 3);
 
