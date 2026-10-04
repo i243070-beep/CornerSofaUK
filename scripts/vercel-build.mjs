@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { cpSync, existsSync, rmSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const command = 'npm run build';
@@ -9,7 +9,9 @@ for (const [key, value] of Object.entries(process.env)) {
     env[key] = value;
   }
 }
-env.NEXT_BUILD_DIR = 'artifacts/vercel-build';
+if (!process.env.VERCEL) {
+  env.NEXT_BUILD_DIR = 'artifacts/vercel-build';
+}
 
 const result = spawnSync(command, {
   stdio: 'inherit',
@@ -26,11 +28,10 @@ if (result.status !== 0) {
   process.exit(result.status ?? 1);
 }
 
-const source = resolve('frontend', 'artifacts', 'vercel-build');
-const target = resolve('.next');
-if (!existsSync(source)) {
-  console.error('Expected frontend/.next after build, but it was not found.');
+const manifest = process.env.VERCEL
+  ? resolve('frontend', '.next', 'routes-manifest.json')
+  : resolve('frontend', 'artifacts', 'vercel-build', 'routes-manifest.json');
+if (!existsSync(manifest)) {
+  console.error(`Expected ${manifest} after build, but it was not found.`);
   process.exit(1);
 }
-rmSync(target, { recursive: true, force: true });
-cpSync(source, target, { recursive: true });
