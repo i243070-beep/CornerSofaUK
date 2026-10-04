@@ -1,0 +1,12 @@
+{
+  "name": "cornersofauk-deploy",
+  "private": true,
+  "workspaces": [
+    "frontend"
+  ],
+  "scripts": {
+    "vercel-build": "npm --workspace frontend run build",
+    "build": "npm --workspace frontend run build",
+    "start": "npm --workspace frontend run start"
+  }
+}
