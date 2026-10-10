@@ -1,4 +1,5 @@
 'use client';
+import { readApiJson } from '@/lib/api-json';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import AdminPhotoUpload from '@/components/AdminPhotoUpload';
@@ -67,7 +68,7 @@ function AutomaticColourPhoto({ variant, source, index, onChange }: {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ source, color: colour, theme: variant.theme || '' }), signal: controller.signal,
         });
-        const data = await response.json();
+        const data = await readApiJson(response);
         if (!response.ok) throw new Error(data.error || 'The colour preview could not be created. Please retry.');
         if (typeof data.url !== 'string' || !isSofaPreviewUrl(data.url)) throw new Error('The preview link could not be created. Please retry.');
         if (active) onChange(key, source, colour, {
@@ -97,7 +98,7 @@ function AutomaticColourPhoto({ variant, source, index, onChange }: {
 
 export default function AdminProductsPage() {
   const [themes, setThemes] = useState<string[]>([]);
-  useEffect(() => { fetch('/api/sofa-themes/').then(r => r.json()).then(data => setThemes(data.themes || [])).catch(() => {}); }, []);
+  useEffect(() => { fetch('/api/sofa-themes/').then(r => readApiJson(r)).then(data => setThemes(data.themes || [])).catch(() => {}); }, []);
   const [products, setProducts] = useState<StoreProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -116,7 +117,7 @@ export default function AdminProductsPage() {
     try {
       const response = await fetch('/api/products/?includeDrafts=1', { cache: 'no-store' });
       if (!response.ok) throw new Error('Unable to load products');
-      const data = await response.json();
+      const data = await readApiJson(response);
       if (!Array.isArray(data)) throw new Error('Invalid product response');
       setProducts(data);
       setNotice(null);
@@ -233,7 +234,7 @@ export default function AdminProductsPage() {
           })),
         }),
       });
-      const data = await response.json();
+      const data = await readApiJson(response);
       if (!response.ok) throw new Error(data.error || 'Save failed');
       const saved = data.product as StoreProduct;
       setProducts((current) => isEditing ? current.map((product) => product.id === saved.id ? { ...product, ...saved } : product) : [saved, ...current]);
@@ -249,7 +250,7 @@ export default function AdminProductsPage() {
     setDeletingId(product.id); setNotice(null);
     try {
       const response = await fetch(`/api/products/${product.id}/`, { method: 'DELETE' });
-      const data = await response.json();
+      const data = await readApiJson(response);
       if (!response.ok) throw new Error(data.error || 'Delete failed');
       setProducts((current) => current.filter((item) => item.id !== product.id));
       setNotice({ type: 'success', text: 'Product deleted from the admin and public website.' });

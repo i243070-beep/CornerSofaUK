@@ -1,4 +1,5 @@
 'use client';
+import { readApiJson } from '@/lib/api-json';
 
 import { useState, useEffect } from 'react';
 
@@ -27,9 +28,9 @@ export default function AdminSwatchRequestsPage() {
     async function fetchRequests() {
       try {
         const res = await fetch('/api/swatch-request');
-        if (res.ok) setRequests(await res.json());
+        if (res.ok) setRequests(await readApiJson(res));
         const swatchRes = await fetch('/api/swatches');
-        if (swatchRes.ok) setSwatches(await swatchRes.json());
+        if (swatchRes.ok) setSwatches(await readApiJson(swatchRes));
       } catch { /* fallback */ }
       setLoading(false);
     }
@@ -51,7 +52,7 @@ export default function AdminSwatchRequestsPage() {
       });
     } catch {
       const res = await fetch('/api/swatch-request');
-      if (res.ok) setRequests(await res.json());
+      if (res.ok) setRequests(await readApiJson(res));
     }
   };
 
@@ -62,7 +63,7 @@ export default function AdminSwatchRequestsPage() {
       await fetch(`/api/swatch-request/${id}`, { method: 'DELETE' });
     } catch {
       const res = await fetch('/api/swatch-request');
-      if (res.ok) setRequests(await res.json());
+      if (res.ok) setRequests(await readApiJson(res));
     }
   };
 

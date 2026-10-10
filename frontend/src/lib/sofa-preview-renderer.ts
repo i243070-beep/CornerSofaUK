@@ -1,6 +1,8 @@
 import { createHash, randomUUID } from 'crypto';
 import { mkdir, readFile, rename, writeFile } from 'fs/promises';
 import path from 'path';
+import { tmpdir } from 'node:os';
+import { usesCloudData, readCloudBytes, writeCloudBytes } from './cloud-data';
 import sharp from 'sharp';
 import { readSofaImage } from './sofa-image-source';
 import { recolourSofaPixels } from './sofa-colour-pixels';
@@ -8,7 +10,7 @@ import { cleanSofaMask, mergeSofaAccessory } from './sofa-mask';
 import { renderSofaCutout } from './sofa-cutout';
 
 const VERSION = 'sofa-colour-v7';
-const storage = () => path.join(process.env.PRODUCT_DATA_DIR || path.join(process.cwd(), '.local-data'), 'sofa-previews');
+const storage = () => path.join(process.env.PRODUCT_DATA_DIR || (process.env.VERCEL ? path.join(tmpdir(), 'corner-sofa') : path.join(process.cwd(), '.local-data')), 'sofa-previews');
 const hash = (value: Buffer | string) => createHash('sha256').update(value).digest('hex');
 const jobs = new Map<string, Promise<string>>();
 let selectionQueue: Promise<unknown> = Promise.resolve();
@@ -17,7 +19,7 @@ let modelPromise: Promise<{ model: any; processor: any; RawImage: any }> | undef
 async function selector() {
   if (!modelPromise) modelPromise = (async () => {
     const { SamModel, AutoProcessor, RawImage, env } = await import('@huggingface/transformers');
-    env.cacheDir = path.join(process.cwd(), '.cache', 'sofa-models');
+    env.cacheDir = path.join(process.env.VERCEL ? tmpdir() : process.cwd(), '.cache', 'sofa-models');
     const [model, processor] = await Promise.all([
       SamModel.from_pretrained('Xenova/slimsam-77-uniform', { dtype: 'fp32', device: 'cpu', session_options: { intraOpNumThreads: 2, interOpNumThreads: 1 } }),
       AutoProcessor.from_pretrained('Xenova/slimsam-77-uniform'),
@@ -119,6 +121,7 @@ export async function generateSofaPreview(source: string, colour: string, theme 
   const themeBytes = theme ? await readFile(path.resolve(process.cwd(), '..', 'backgrounds', theme)) : undefined;
   const outputKey = hash(`${sourceKey}:${colour.toLowerCase()}:${themeBytes ? hash(themeBytes) : ''}`);
   const url = `/api/sofa-previews/${outputKey}.webp`;
+  if (usesCloudData() && await readCloudBytes(`sofa-previews/${outputKey}.webp`)) return url;
   const output = path.join(storage(), `${outputKey}.webp`);
   try { await readFile(output); return url; }
   catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
@@ -138,6 +141,7 @@ export async function generateSofaPreview(source: string, colour: string, theme 
       webp = await sharp(Buffer.from(pixels), { raw: { width: info.width, height: info.height, channels: 3 } }).webp({ quality: 90 }).toBuffer();
     }
     await atomicWrite(output, webp);
+    if (usesCloudData()) await writeCloudBytes(`sofa-previews/${outputKey}.webp`, webp);
     return url;
   })();
   jobs.set(outputKey, job);
@@ -146,6 +150,7 @@ export async function generateSofaPreview(source: string, colour: string, theme 
 
 export async function readSofaPreview(filename: string) {
   if (!/^[a-f0-9]{64}\.webp$/.test(filename)) return undefined;
+  if (usesCloudData()) return await readCloudBytes(`sofa-previews/${filename}`) || await readFile(path.join(process.cwd(), 'public/images/sofa-previews', filename)).catch(error => { if (error.code === 'ENOENT') return undefined; throw error; });
   try { return await readFile(path.join(storage(), filename)); }
   catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined; throw error; }
 }

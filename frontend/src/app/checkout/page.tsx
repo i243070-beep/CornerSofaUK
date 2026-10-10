@@ -1,4 +1,5 @@
 'use client';
+import { readApiJson } from '@/lib/api-json';
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -116,7 +117,7 @@ export default function CheckoutPage() {
     setCheckingPostcode(true);
     try {
       const response = await fetch(`/api/delivery/quote/?postcode=${encodeURIComponent(postcode)}`, { cache: 'no-store' });
-      const result = await response.json();
+      const result = await readApiJson(response);
       if (!response.ok) throw new Error(result.error || 'We could not check that postcode.');
       setCustomer(current => ({ ...current, postcode: result.postcode }));
       setPostcodeInput(result.postcode.replace(/\s/g, ''));
@@ -148,7 +149,7 @@ export default function CheckoutPage() {
     setVerifiedAddress('');
     try {
       const response = await fetch('/api/address/validate/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ postcode: postcodeValue, city: cityValue }) });
-      const result = await response.json();
+      const result = await readApiJson(response);
       if (!response.ok || !result.valid) {
         setErrors(current => ({ ...current, [result.field === 'city' ? 'city' : 'postcode']: result.message || 'Please check your town or city and postcode.' }));
         if (response.status === 503) { setError(result.message); setStep(3); }
@@ -181,7 +182,7 @@ export default function CheckoutPage() {
     try {
       if (!(await validateAddress(checked.customer.postcode, checked.customer.city))) return;
       const response = await fetch('/api/orders/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...JSON.parse(payload), checkoutKey: attempt.current.key }) });
-      const result = await response.json();
+      const result = await readApiJson(response);
       if (!response.ok) {
         if (result.errors) setErrors(result.errors);
         if (response.status === 409) attempt.current = { payload: '', key: '' };

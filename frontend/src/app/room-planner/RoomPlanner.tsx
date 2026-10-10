@@ -1,4 +1,5 @@
 'use client';
+import { readApiJson } from '@/lib/api-json';
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -79,7 +80,7 @@ export default function RoomPlanner({ initialProductId = '', initialVariantId = 
     setCatalogueBusy(true); setCatalogueError('');
     fetch('/api/products/', { cache: 'no-store', signal: controller.signal }).then(async response => {
       if (!response.ok) throw new Error('We could not load the sofa collection.');
-      const data = await response.json();
+      const data = await readApiJson(response);
       if (!Array.isArray(data)) throw new Error('We could not load the sofa collection.');
       setProducts(data);
       if (initialProductId) {
@@ -102,7 +103,7 @@ export default function RoomPlanner({ initialProductId = '', initialVariantId = 
     (async () => {
       try {
         const response = await fetch(`/api/room-planner/sofa/?product=${encodeURIComponent(productId)}&variant=${encodeURIComponent(variantId)}`, { signal: controller.signal });
-        if (!response.ok) throw new Error((await response.json()).error || 'The sofa photo could not be prepared.');
+        if (!response.ok) throw new Error((await readApiJson(response)).error || 'The sofa photo could not be prepared.');
         if (!response.headers.get('content-type')?.startsWith('image/png')) throw new Error('The sofa preview did not return an image.');
         const blob = await response.blob();
         if (controller.signal.aborted) return;

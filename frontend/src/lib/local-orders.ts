@@ -2,6 +2,7 @@ import { mkdir, readFile, rename, writeFile } from 'fs/promises';
 import path from 'path';
 import { randomUUID } from 'node:crypto';
 import type { BuildSnapshot } from './sofa-builder/types';
+import { usesCloudData, readCloudJson, mutateCloudJson } from './cloud-data';
 
 export interface LocalOrder {
   id: string;
@@ -43,6 +44,7 @@ const dataDirectory = path.join(process.cwd(), '.local-data');
 const ordersFile = path.join(dataDirectory, 'orders.json');
 
 async function readOrders(): Promise<LocalOrder[]> {
+  if (usesCloudData()) return await readCloudJson<LocalOrder[]>('orders.json') || [];
   try {
     return JSON.parse(await readFile(ordersFile, 'utf8')) as LocalOrder[];
   } catch (error) {
@@ -62,7 +64,10 @@ export const getLocalOrders = readOrders;
 
 const orderWrites = globalThis as typeof globalThis & { sofaOrderWrites?: Promise<void> };
 function mutateOrders<T>(update: (orders: LocalOrder[]) => Promise<T>): Promise<T> {
-  const next = (orderWrites.sofaOrderWrites || Promise.resolve()).then(async () => update(await readOrders()));
+  if (usesCloudData()) return mutateCloudJson('orders.json', [] as LocalOrder[], update);
+  const next = (orderWrites.sofaOrderWrites || Promise.resolve()).then(async () => {
+    const orders = await readOrders(); const result = await update(orders); await saveOrders(orders); return result;
+  });
   orderWrites.sofaOrderWrites = next.then(() => {}, () => {});
   return next;
 }
@@ -88,7 +93,7 @@ export async function createLocalOrder(input: Omit<LocalOrder, 'id' | 'date'>) {
     id,
     date: new Date().toISOString(),
   };
-  await saveOrders([order, ...orders]);
+  orders.unshift(order);
   return order;
   });
 }
@@ -98,7 +103,6 @@ export async function updateLocalOrderStatus(id: string, status: string) {
   const order = orders.find((candidate) => candidate.id === id);
   if (!order) return undefined;
   order.status = status;
-  await saveOrders(orders);
   return order;
   });
 }
@@ -111,7 +115,6 @@ export async function updateLocalOrderDelivery(id: string, deliveryDate: string,
   order.deliveryTime = deliveryTime;
   order.sofaDetails = sofaDetails;
   if (approve) order.status = 'confirmed';
-  await saveOrders(orders);
   return order;
   });
 }
@@ -121,7 +124,6 @@ export async function markLocalOrderEmailSent(id: string) {
   const order = orders.find((candidate) => candidate.id === id);
   if (!order) return undefined;
   order.emailSentAt = new Date().toISOString();
-  await saveOrders(orders);
   return order;
   });
 }

@@ -1,4 +1,5 @@
 'use client';
+import { readApiJson } from '@/lib/api-json';
 
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -30,7 +31,7 @@ export default function ProductNavigation({ home = false, separateActions = fals
   useEffect(() => {
     if (!open) return;
     const controller = new AbortController();
-    fetch('/api/products/', { signal: controller.signal }).then(response => response.ok ? response.json() : []).then(data => { if (Array.isArray(data)) setProducts(data); }).catch(() => {});
+    fetch('/api/products/', { signal: controller.signal }).then(response => response.ok ? readApiJson(response) : []).then(data => { if (Array.isArray(data)) setProducts(data); }).catch(() => {});
     dialog.current?.showModal();
     const previous = document.body.style.overflow;
     document.body.style.overflow = 'hidden';

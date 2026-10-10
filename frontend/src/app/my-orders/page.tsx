@@ -1,4 +1,5 @@
 'use client';
+import { readApiJson } from '@/lib/api-json';
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -24,7 +25,7 @@ export default function MyOrdersPage() {
     if (!saved.length) { setOrders([]); setLoading(false); return; }
     try {
       const response = await fetch('/api/order-tracking/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, cache: 'no-store', body: JSON.stringify({ tokens: saved.map(item => item.token) }) });
-      const result = await response.json();
+      const result = await readApiJson(response);
       if (!response.ok) throw new Error(result.error || 'Your orders could not be loaded.');
       setOrders(Array.isArray(result.orders) ? result.orders : []);
       setError('');

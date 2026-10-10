@@ -1,4 +1,5 @@
 'use client';
+import { readApiJson } from '@/lib/api-json';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { Star } from 'lucide-react';
@@ -9,7 +10,7 @@ export function ReviewsProvider({ children }: { children: ReactNode }) {
   const [ratings, setRatings] = useState<ReviewSummary | null>(null);
   useEffect(() => {
     let active = true;
-    const refresh = () => fetch('/api/reviews/?summary=1', { cache: 'no-store' }).then(res => { if (!res.ok) throw Error(); return res.json(); }).then(data => { if (active) setRatings(data); }).catch(() => {});
+    const refresh = () => fetch('/api/reviews/?summary=1', { cache: 'no-store' }).then(res => { if (!res.ok) throw Error(); return readApiJson(res); }).then(data => { if (active) setRatings(data); }).catch(() => {});
     refresh();
     window.addEventListener('reviews-updated', refresh);
     window.addEventListener('focus', refresh);

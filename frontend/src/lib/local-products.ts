@@ -3,6 +3,7 @@ import { mkdir, readFile, rename, writeFile } from 'fs/promises';
 import path from 'path';
 import bundledCatalogue from '@/data/catalogue.json';
 import type { StoreProduct } from './product-options';
+import { usesCloudData, readCloudJson, mutateCloudJson } from './cloud-data';
 
 export type LocalProduct = StoreProduct;
 
@@ -57,6 +58,7 @@ async function saveProducts(products: LocalProduct[]) {
 }
 
 export async function getLocalProducts(): Promise<LocalProduct[]> {
+  if (usesCloudData()) return await readCloudJson<LocalProduct[]>('products.json') || structuredClone(bundledProducts);
   try {
     return JSON.parse(await readFile(productsFile, 'utf8')) as LocalProduct[];
   } catch (error) {
@@ -74,6 +76,9 @@ export async function getLocalProduct(id: string) {
 }
 
 export async function createLocalProduct(input: Omit<LocalProduct, 'id'>) {
+  if (usesCloudData()) return mutateCloudJson('products.json', bundledProducts, products => {
+    const product: LocalProduct = { ...input, id: randomUUID() }; products.unshift(product); return product;
+  });
   const products = await getLocalProducts();
   const product: LocalProduct = { ...input, id: randomUUID() };
   products.unshift(product);
@@ -82,6 +87,11 @@ export async function createLocalProduct(input: Omit<LocalProduct, 'id'>) {
 }
 
 export async function updateLocalProduct(id: string, changes: Partial<LocalProduct>) {
+  if (usesCloudData()) return mutateCloudJson('products.json', bundledProducts, products => {
+    const index = products.findIndex(product => product.id === id);
+    if (index < 0) return undefined;
+    products[index] = { ...products[index], ...changes, id }; return products[index];
+  });
   const products = await getLocalProducts();
   const index = products.findIndex((product) => product.id === id);
   if (index === -1) return undefined;
@@ -91,6 +101,11 @@ export async function updateLocalProduct(id: string, changes: Partial<LocalProdu
 }
 
 export async function deleteLocalProduct(id: string) {
+  if (usesCloudData()) return mutateCloudJson('products.json', bundledProducts, products => {
+    const index = products.findIndex(product => product.id === id);
+    if (index < 0) return undefined;
+    const [product] = products.splice(index, 1); return { id: product.id, title: product.title };
+  });
   const products = await getLocalProducts();
   const product = products.find((candidate) => candidate.id === id);
   if (!product) return undefined;

@@ -1,4 +1,5 @@
 'use client';
+import { readApiJson } from '@/lib/api-json';
 import { Suspense, useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -27,7 +28,7 @@ function ReviewsExperience() {
     let active = true;
     setLoading(true); setLoadError('');
     Promise.all([fetch('/api/reviews/', { cache: 'no-store' }), fetch('/api/products/', { cache: 'no-store' })])
-      .then(async responses => { if (responses.some(res => !res.ok)) throw Error(); return Promise.all(responses.map(res => res.json())); })
+      .then(async responses => { if (responses.some(res => !res.ok)) throw Error(); return Promise.all(responses.map(res => readApiJson(res))); })
       .then(([feedback, sofas]) => { if (active) { setReviews(feedback); setProducts(sofas); } })
       .catch(() => { if (active) setLoadError('Could not load reviews. Please try again.'); })
       .finally(() => { if (active) setLoading(false); });
@@ -49,7 +50,7 @@ function ReviewsExperience() {
     setSaving(true);
     try {
       const response = await fetch('/api/reviews/', { method: 'POST', body });
-      const result = await response.json();
+      const result = await readApiJson(response);
       if (!response.ok) throw Error(result.error || 'Could not save your review. Please try again.');
       setReviews(current => [result, ...current]); setSent(true); form.reset(); setRating(0); setFiles([]);
       window.dispatchEvent(new Event('reviews-updated'));

@@ -1,4 +1,5 @@
 'use client';
+import { readApiJson } from '@/lib/api-json';
 
 import { useState, useEffect } from 'react';
 
@@ -21,7 +22,7 @@ export default function AdminAppointmentsPage() {
     async function fetchAppointments() {
       try {
         const res = await fetch('/api/appointment');
-        if (res.ok) setAppointments(await res.json());
+        if (res.ok) setAppointments(await readApiJson(res));
       } catch { /* fallback */ }
       setLoading(false);
     }
@@ -38,7 +39,7 @@ export default function AdminAppointmentsPage() {
       });
     } catch {
       const res = await fetch('/api/appointment');
-      if (res.ok) setAppointments(await res.json());
+      if (res.ok) setAppointments(await readApiJson(res));
     }
   };
 
@@ -49,7 +50,7 @@ export default function AdminAppointmentsPage() {
       await fetch(`/api/appointment/${id}`, { method: 'DELETE' });
     } catch {
       const res = await fetch('/api/appointment');
-      if (res.ok) setAppointments(await res.json());
+      if (res.ok) setAppointments(await readApiJson(res));
     }
   };
 

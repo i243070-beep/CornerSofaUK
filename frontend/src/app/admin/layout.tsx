@@ -1,4 +1,5 @@
 'use client';
+import { readApiJson } from '@/lib/api-json';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -33,7 +34,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     let active = true;
     fetch('/api/admin/auth/', { cache: 'no-store' }).then(async response => {
-      const valid = response.ok && (await response.json()).valid;
+      const valid = response.ok && (await readApiJson(response)).valid;
       if (active) setAuthenticated(Boolean(valid));
       if (!valid) { localStorage.removeItem('admin_token'); localStorage.removeItem('admin_token_expires'); }
     }).catch(() => { if (active) setError('Could not verify your session. Please sign in again.'); })
@@ -52,7 +53,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
-      const data = await res.json();
+      const data = await readApiJson(res);
 
       if (!res.ok || !data.success) {
         setError(data.error || 'Invalid password');
@@ -73,7 +74,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setLogoutError('');
     try {
       const response = await fetch('/api/admin/auth', { method: 'DELETE', signal: AbortSignal.timeout(10000) });
-      if (!response.ok || !(await response.json()).success) throw new Error('Sign-out failed');
+      if (!response.ok || !(await readApiJson(response)).success) throw new Error('Sign-out failed');
       localStorage.removeItem('admin_token');
       localStorage.removeItem('admin_token_expires');
       setAuthenticated(false);

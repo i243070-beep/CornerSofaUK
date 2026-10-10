@@ -1,4 +1,5 @@
 'use client';
+import { readApiJson } from '@/lib/api-json';
 import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Truck, X } from 'lucide-react';
@@ -14,7 +15,7 @@ export default function DeliveryAvailability() {
     event.preventDefault(); setBusy(true); setResult('');
     try {
       const response = await fetch(`/api/delivery/quote/?postcode=${encodeURIComponent(postcode)}`);
-      const data = await response.json();
+      const data = await readApiJson(response);
       setResult(response.ok ? `Delivery available for ${data.postcode}. ${data.delivery === 0 ? 'Free delivery' : `Delivery charge: £${Number(data.delivery).toFixed(2)}`}.` : data.error || 'Please check your postcode.');
     } catch { setResult('Could not check delivery right now. Please try again.'); }
     finally { setBusy(false); }

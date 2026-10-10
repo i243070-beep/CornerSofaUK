@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { mkdir, readFile, readdir, writeFile, rename } from 'fs/promises';
 import path from 'path';
 import { isDatabaseConfigured, sql } from './db';
+import { usesCloudData, listCloudJson, writeCloudJson } from './cloud-data';
 import type { CustomerReview } from './reviews';
 
 const directory = () => path.join(process.env.REVIEW_DATA_DIR || process.env.PRODUCT_DATA_DIR || path.join(process.cwd(), '.local-data'), 'reviews');
@@ -14,6 +15,7 @@ function ensureSchema() {
   )`.catch(error => { schema = undefined; throw error; });
 }
 export async function listReviews(): Promise<CustomerReview[]> {
+  if (!isDatabaseConfigured && usesCloudData()) return (await listCloudJson<CustomerReview>('reviews/')).sort((a, b) => b.created_at.localeCompare(a.created_at));
   if (isDatabaseConfigured) {
     await ensureSchema();
     return await sql`SELECT * FROM customer_sofa_reviews ORDER BY created_at DESC` as CustomerReview[];
@@ -25,6 +27,7 @@ export async function listReviews(): Promise<CustomerReview[]> {
 }
 export async function saveReview(input: Omit<CustomerReview, 'id' | 'created_at'>): Promise<CustomerReview> {
   const review = { ...input, id: randomUUID(), created_at: new Date().toISOString() };
+  if (!isDatabaseConfigured && usesCloudData()) { await writeCloudJson(`reviews/${review.id}.json`, review); return review; }
   if (isDatabaseConfigured) {
     await ensureSchema();
     await sql`INSERT INTO customer_sofa_reviews (id,product_id,product_title,name,rating,text,photos,created_at)

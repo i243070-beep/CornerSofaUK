@@ -1,4 +1,5 @@
 'use client';
+import { readApiJson } from '@/lib/api-json';
 import BuildSpecification from '@/components/sofa-builder/BuildSpecification';
 import type { BuildSnapshot } from '@/lib/sofa-builder/types';
 
@@ -67,7 +68,7 @@ export default function AdminOrdersPage() {
       try {
         const response = await fetch('/api/orders', { cache: 'no-store', signal });
         if (!response.ok) throw new Error('Could not load orders. Please refresh or sign in again.');
-        const data = await response.json();
+        const data = await readApiJson(response);
         if (active && !signal.aborted) { setOrders(Array.isArray(data) ? data : []); setLoadError(''); }
       } catch (error) {
         if (active && !signal.aborted) setLoadError(error instanceof Error ? error.message : 'Could not load orders.');
@@ -101,7 +102,7 @@ export default function AdminOrdersPage() {
     setDeliveryError('');
     try {
       const response = await fetch(`/api/orders/${editingId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ deliveryDate, deliveryTime, sofaDetails, sendEmail, approve }) });
-      const data = await response.json().catch(() => ({}));
+      const data = await readApiJson(response).catch(() => ({}));
       if (!response.ok) throw new Error(data.error || 'Could not save delivery details.');
       setOrders((current) => current.map((order) => order.id === editingId ? data.order : order));
       if (sendEmail) alert('Delivery details saved and email sent.');

@@ -1,4 +1,5 @@
 'use client';
+import { readApiJson } from '@/lib/api-json';
 
 import { useState, useEffect } from 'react';
 import { Modal, Input, Button } from './ui';
@@ -59,7 +60,7 @@ export default function SwatchRequestModal({ isOpen, onClose, initialSwatchIds =
       try {
         const res = await fetch('/api/swatches');
         if (res.ok) {
-          const data = await res.json();
+          const data = await readApiJson(res);
           if (data.length > 0) setSwatches(data);
         }
       } catch { /* use mock */ }
@@ -105,7 +106,7 @@ export default function SwatchRequestModal({ isOpen, onClose, initialSwatchIds =
         }),
       });
 
-      const data = await res.json().catch(() => ({}));
+      const data = await readApiJson(res).catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'Your swatch request could not be submitted. Please try again.');
       setSuccess(true);
       onSubmit?.({

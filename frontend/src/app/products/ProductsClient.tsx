@@ -1,4 +1,5 @@
 'use client';
+import { readApiJson } from '@/lib/api-json';
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
@@ -85,7 +86,7 @@ export default function ProductsClient({ initialProducts }: { initialProducts?: 
       try {
         const res = await fetch('/api/products/', { cache: 'no-store', signal: requestController.signal });
         if (!res.ok) throw new Error('Unable to load products');
-        const data = await res.json();
+        const data = await readApiJson(res);
         if (!Array.isArray(data)) throw new Error('Invalid catalogue response');
         if (active && !requestController.signal.aborted) {
           setProducts(data.map(ensureLocalProductImages));

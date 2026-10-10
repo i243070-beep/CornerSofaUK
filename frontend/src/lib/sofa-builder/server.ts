@@ -3,6 +3,7 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { mkdir, readFile, rename, writeFile, readdir, link, unlink } from 'node:fs/promises';
 import path from 'node:path';
 import { isDatabaseConfigured, sql } from '../db';
+import { usesCloudData, readCloudJson, writeCloudJson, insertCloudJson, listCloudJson } from '../cloud-data';
 import { listProducts } from '../product-store';
 import { records } from '../alashi-store';
 import { deliveryCharge } from '../alashi-commerce';
@@ -12,18 +13,22 @@ import { DEFAULT_RULES, type BuilderRules, type BuildSelection, type BuildSnapsh
 
 const directory = () => path.join(process.env.PRODUCT_DATA_DIR || path.join(process.cwd(), '.local-data'), 'builder');
 const keyFile = (key: string) => path.join(directory(), createHash('sha256').update(key).digest('hex') + '.json');
+const cloudKey = (key: string) => `builder/${createHash('sha256').update(key).digest('hex')}.json`;
 async function table() { await sql`CREATE TABLE IF NOT EXISTS sofa_builder_records (id text PRIMARY KEY, value jsonb NOT NULL)`; }
 export async function readBuilderRecord<T>(id: string): Promise<T | undefined> {
   if (isDatabaseConfigured) { await table(); const result = await sql`SELECT value FROM sofa_builder_records WHERE id=${id}`; return result[0]?.value as T | undefined; }
+  if (usesCloudData()) return (await readCloudJson<{ value: T }>(cloudKey(id)))?.value;
   try { return JSON.parse(await readFile(keyFile(id), 'utf8')).value; } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined; throw error; }
 }
 export async function writeBuilderRecord(id: string, value: unknown) {
   if (isDatabaseConfigured) { await table(); await sql`INSERT INTO sofa_builder_records (id,value) VALUES (${id},${JSON.stringify(value)}::jsonb) ON CONFLICT (id) DO UPDATE SET value=EXCLUDED.value`; return; }
+  if (usesCloudData()) { await writeCloudJson(cloudKey(id), { id, value }); return; }
   await mkdir(directory(), { recursive: true }); const file = keyFile(id), temp = file + `.${randomUUID()}.tmp`;
   await writeFile(temp, JSON.stringify({ id, value }), 'utf8'); await rename(temp, file);
 }
 export async function insertBuilderRecord<T>(id: string, value: T): Promise<T> {
   if (isDatabaseConfigured) { await table(); await sql`INSERT INTO sofa_builder_records (id,value) VALUES (${id},${JSON.stringify(value)}::jsonb) ON CONFLICT (id) DO NOTHING`; return (await readBuilderRecord<T>(id))!; }
+  if (usesCloudData()) return (await insertCloudJson(cloudKey(id), { id, value })).value;
   await mkdir(directory(), { recursive: true });
   const destination=keyFile(id), temporary=destination+`.${randomUUID()}.tmp`;
   await writeFile(temporary,JSON.stringify({id,value}),'utf8');
@@ -32,6 +37,7 @@ export async function insertBuilderRecord<T>(id: string, value: T): Promise<T> {
 }
 export async function getBuilderQuotes(): Promise<BuildQuote[]> {
   if (isDatabaseConfigured) { await table(); return (await sql`SELECT value FROM sofa_builder_records WHERE id LIKE 'quote:%'`).map(row => row.value as BuildQuote); }
+  if (usesCloudData()) return (await listCloudJson<{ id: string; value: BuildQuote }>('builder/')).filter(row => row.id.startsWith('quote:')).map(row => row.value);
   await mkdir(directory(), { recursive: true }); const rows = await Promise.all((await readdir(directory())).filter(f => f.endsWith('.json')).map(async f => JSON.parse(await readFile(path.join(directory(), f),'utf8'))));
   return rows.filter(row => row.id.startsWith('quote:')).map(row => row.value);
 }

@@ -1,7 +1,8 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash } from 'node:crypto';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { isDatabaseConfigured, sql } from './db';
+import { usesCloudData, listCloudJson, writeCloudJson, deleteCloudData } from './cloud-data';
 
 export type AiRange = { min: number; max: number; floor?: number };
 export type DeliveryZone = { postcode: string; charge: number };
@@ -16,11 +17,13 @@ async function table() {
 }
 export async function records(): Promise<AlashiRecord[]> {
   if (isDatabaseConfigured) { await table(); return await sql`SELECT id, kind, value FROM alashi_records` as AlashiRecord[]; }
+  if (usesCloudData()) return listCloudJson<AlashiRecord>('alashi/');
   const { readdir } = await import('node:fs/promises');
   await mkdir(directory(), { recursive: true });
   return Promise.all((await readdir(directory())).filter(name => name.endsWith('.json')).map(async name => JSON.parse(await readFile(path.join(directory(), name), 'utf8'))));
 }
 export async function putRecord(record: AlashiRecord) {
+  if (!isDatabaseConfigured && usesCloudData()) { await writeCloudJson(`alashi/${createRecordKey(record.id)}.json`, record); return; }
   if (isDatabaseConfigured) {
     await table();
     await sql`INSERT INTO alashi_records (id,kind,value) VALUES (${record.id},${record.kind},${JSON.stringify(record.value)}::jsonb) ON CONFLICT (id) DO UPDATE SET kind=EXCLUDED.kind,value=EXCLUDED.value`;
@@ -34,12 +37,14 @@ export async function putRecord(record: AlashiRecord) {
   }
 }
 export async function deleteRecord(id: string) {
+  if (!isDatabaseConfigured && usesCloudData()) { await deleteCloudData(`alashi/${createRecordKey(id)}.json`); return; }
   if (isDatabaseConfigured) { await table(); await sql`DELETE FROM alashi_records WHERE id=${id}`; }
   else {
     const { createHash } = await import('node:crypto'); const { rm } = await import('node:fs/promises');
     await rm(path.join(directory(), createHash('sha256').update(id).digest('hex') + '.json'), { force: true });
   }
 }
+function createRecordKey(id: string) { return createHash('sha256').update(id).digest('hex'); }
 export function validateRange(value: unknown): AiRange {
   const range = value as AiRange;
   if (!range || ![range.min, range.max].every(n => typeof n === 'number' && Number.isFinite(n) && n > 0 && n <= 99999999.99 && Math.abs(n * 100 - Math.round(n * 100)) < 0.00001) || range.min > range.max) throw new Error('Enter valid minimum and maximum GBP prices; maximum must be at least minimum.');

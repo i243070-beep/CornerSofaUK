@@ -1,4 +1,5 @@
 'use client';
+import { readApiJson } from '@/lib/api-json';
 import { useEffect, useRef, useState } from 'react';
 import { FileText, ImagePlus, Minus, Send, Sofa, Sparkles, X } from 'lucide-react';
 import styles from './alashi.module.css';
@@ -36,7 +37,7 @@ export default function AlashiChat() {
     setBusy(true);setError('');
     try {
       const response=await fetch('/api/alashi/',{method:'POST',signal:controller.current.signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,attachment:attached,context,history:messages.slice(-12).map(m=>({role:m.role,text:m.text})),action:productId?'generate':'chat',productId})});
-      const data=await response.json(); if(!response.ok)throw new Error(data.error || 'Please try again.');
+      const data=await readApiJson(response); if(!response.ok)throw new Error(data.error || 'Please try again.');
       if(run!==generation.current||controller.current?.signal.aborted)return;
       setContext(data.context||context);
       setMessages(current=>[...current,{role:'customer',text:productId?`Custom concept: ${text}`:text+(attached?`\nAttached: ${attached.name}`:'')},{role:'assistant',text:String(data.answer || '').replace(/\bALASHI\b/g,'HELPER'),products:data.products,image:data.image,request:text,attachment:attached,actions:data.actions,order:data.order}]);

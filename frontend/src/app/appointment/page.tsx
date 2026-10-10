@@ -1,4 +1,5 @@
 'use client';
+import { readApiJson } from '@/lib/api-json';
 
 import { useState } from 'react';
 import { Button, Input, Card } from '@/components/ui';
@@ -82,7 +83,7 @@ export default function AppointmentPage() {
         }),
       });
 
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (!res.ok) throw new Error(data.error || 'Booking failed');
 
       setSuccess(true);
