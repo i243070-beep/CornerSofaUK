@@ -9,6 +9,7 @@ describe('saved sofa colour previews', () => {
     const url = `/api/sofa-previews/${'a1'.repeat(32)}.webp`;
     expect(isSofaPreviewUrl(url)).toBe(true);
     expect(isSofaPreviewUrl(`${url}/`)).toBe(true);
+    expect(isSofaPreviewUrl(url.replace('/api/', '/images/'))).toBe(true);
     for (const invalid of ['', '/images/sofa.webp', `${url}?color=red`, `${url}.svg`, url.replace('.webp', '.png'), url.replace('a1', 'ZZ'), `https://example.com${url}`, '//example.com/sofa.webp', '/api/sofa-previews/../secret.webp']) {
       expect(isSofaPreviewUrl(invalid), invalid).toBe(false);
     }

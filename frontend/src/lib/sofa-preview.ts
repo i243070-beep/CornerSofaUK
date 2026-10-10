@@ -1,5 +1,5 @@
 export function isSofaPreviewUrl(value: string) {
-  return /^\/api\/sofa-previews\/[a-f0-9]{64}\.webp\/?$/.test(value);
+  return /^\/(?:api|images)\/sofa-previews\/[a-f0-9]{64}\.webp\/?$/.test(value);
 }
 
 const colours: Array<[string, string]> = [

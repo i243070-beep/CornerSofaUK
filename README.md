@@ -490,4 +490,8 @@ This project is proprietary software. All rights reserved.
 
 Set `ADMIN_PASSWORD` and a random server-only `TOKEN_SECRET` in the deployment environment. Admin login is disabled without a configured password. Admin data and catalogue mutations require a signed HttpOnly session cookie. Keep `.env.local`, `.local-data`, generated artifacts, and caches out of Git.
 
-Vercel root directory: `frontend`. Orders currently use local filesystem storage; persistent order storage and uploaded-image storage must be configured before accepting live customer orders on Vercel.
+The connected Vercel project builds from the repository root using `scripts/vercel-build.mjs`, with output in `frontend/.next`.
+
+After editing sofas locally, run `npm run prepare:deploy` from the repository root. This copies the current product catalogue into `frontend/src/data/catalogue.json`, exports referenced local colour previews and uploaded product photos into `frontend/public/images`, and checks every catalogue image exists. Commit that catalogue and its exported photos, including `frontend/public/images/catalogue-rooms`, then push to `cornersofauk main` to trigger Vercel. Local private records and credentials stay outside Git.
+
+Set `ADMIN_USERNAME`, `ADMIN_PASSWORD`, and `TOKEN_SECRET` in Vercel. Orders currently use local filesystem storage; persistent order storage and uploaded-image storage must be configured before accepting live customer orders on Vercel. Local admin edits become part of the bundled storefront only after preparing and deploying them; a database is needed for durable admin edits made on Vercel.
