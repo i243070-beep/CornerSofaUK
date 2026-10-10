@@ -12,6 +12,7 @@
       "Corner"
     ],
     "images": [
+      "/images/catalogue-rooms/000-f8d882d03d794d11bc78c110.webp",
       "/images/catalogue/f8d882d03d794d11bc78c110.webp",
       "/images/catalogue/8ec56f58c1ed078d95c6247c.webp",
       "/images/catalogue/8942668190207ca16fa2f7a7.webp",
@@ -26,6 +27,7 @@
         "price": 529,
         "stock": 1000,
         "images": [
+          "/images/catalogue-rooms/000-f8d882d03d794d11bc78c110.webp",
           "/images/catalogue/f8d882d03d794d11bc78c110.webp",
           "/images/catalogue/8ec56f58c1ed078d95c6247c.webp",
           "/images/catalogue/8942668190207ca16fa2f7a7.webp",
@@ -41,7 +43,9 @@
         "color_hex": "#1a1a1a",
         "price": 529,
         "stock": 1000,
-        "images": [],
+        "images": [
+          "/images/catalogue-rooms/001-73ee8d82fd0c1f54aef565dc.webp"
+        ],
         "sku": "SOFA-9cf885be-90b4-430a-956f-94b05b3c70c6"
       },
       {
@@ -51,7 +55,9 @@
         "color_hex": "#7a4b2a",
         "price": 529,
         "stock": 1000,
-        "images": [],
+        "images": [
+          "/images/catalogue-rooms/002-1191e400c4981d691e1fbef5.webp"
+        ],
         "sku": "SOFA-2dc6b65d-8fa7-459a-bd92-db13c3efc829"
       },
       {
@@ -62,7 +68,7 @@
         "price": 529,
         "stock": 1000,
         "images": [
-          "/api/sofa-previews/507a771ded4e90e90fa80a15259297345a39eab85bcc634225f21f3cd8391710.webp"
+          "/images/sofa-previews/507a771ded4e90e90fa80a15259297345a39eab85bcc634225f21f3cd8391710.webp"
         ],
         "sku": "SOFA-e0c546b4-86ed-4b9d-9634-547213c0e4a0"
       }
@@ -903,7 +909,7 @@
         "price": 399,
         "stock": 1000,
         "images": [
-          "/api/sofa-previews/2b32919c56a067e799d54675a47ba0b08ac89decc332161eb54e0ee7510f2880.webp"
+          "/images/sofa-previews/2b32919c56a067e799d54675a47ba0b08ac89decc332161eb54e0ee7510f2880.webp"
         ],
         "sku": "SOFA-36b2cb56-11ec-42d2-8e44-2115c1215d0d"
       },
@@ -915,7 +921,7 @@
         "price": 399,
         "stock": 1000,
         "images": [
-          "/api/sofa-previews/b343a91fb1a9183dc3d31bc6e99ecce1f3b60d237023c75adb7e9592ce67bb59.webp"
+          "/images/sofa-previews/b343a91fb1a9183dc3d31bc6e99ecce1f3b60d237023c75adb7e9592ce67bb59.webp"
         ],
         "sku": "SOFA-fec0b57e-e591-4c9d-92e1-fe21206a2357"
       },
@@ -927,7 +933,7 @@
         "price": 399,
         "stock": 1000,
         "images": [
-          "/api/sofa-previews/263d0811c9ec304505f7d42a0c327f623da4d5631503a40347f9144ada67d8a9.webp"
+          "/images/sofa-previews/263d0811c9ec304505f7d42a0c327f623da4d5631503a40347f9144ada67d8a9.webp"
         ],
         "sku": "SOFA-0f01268f-f4cf-4cfb-b788-5a27e553ffa5"
       },
@@ -939,7 +945,7 @@
         "price": 399,
         "stock": 1000,
         "images": [
-          "/api/sofa-previews/7e3987d7d34b8b6b7d7e1cafbdca08804e87e0d5491bc7957171c5403aec27db.webp"
+          "/images/sofa-previews/7e3987d7d34b8b6b7d7e1cafbdca08804e87e0d5491bc7957171c5403aec27db.webp"
         ],
         "sku": "SOFA-730532c0-ddf2-4fef-a0e0-be17f359b496"
       }

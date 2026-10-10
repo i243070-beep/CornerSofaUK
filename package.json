@@ -5,6 +5,7 @@
     "frontend"
   ],
   "scripts": {
+    "prepare:deploy": "node scripts/prepare-catalogue.mjs",
     "vercel-build": "node scripts/vercel-build.mjs",
     "build": "node scripts/vercel-build.mjs",
     "start": "npm --workspace frontend run start"

@@ -4,6 +4,21 @@ const fs = require('node:fs/promises');
 const base = process.env.TEST_BASE_URL || 'http://localhost:3100';
 let browser;
 
+async function loadPageImages(page) {
+  await page.locator('img').evaluateAll(async images => {
+    await Promise.all(images.map(image => {
+      image.loading = 'eager';
+      if (image.complete) return;
+      return new Promise(resolve => {
+        image.addEventListener('load', resolve, { once: true });
+        image.addEventListener('error', resolve, { once: true });
+      });
+    }));
+  });
+  const broken = await page.locator('img').evaluateAll(images => images.filter(image => !image.naturalWidth).map(image => image.src));
+  if (broken.length) throw new Error(`Broken images: ${broken.join(', ')}`);
+}
+
 (async () => {
   browser = await chromium.launch({ channel: 'chrome', headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
@@ -17,14 +32,15 @@ let browser;
   await expect(page.getByRole('heading', { name: /Comfort Starts with the Right Furniture/i })).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'Homepage navigation' })).toBeVisible();
   await expect(page.getByRole('searchbox', { name: 'Search furniture' })).toBeVisible();
-  await expect(page.getByRole('complementary', { name: 'Plan your room' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your room. Beautifully planned.' })).toBeVisible();
   await expect(page.getByRole('button', { name: /^Open basket/ })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Plan my room' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Customer feedback' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'Homepage navigation' }).getByRole('link', { name: 'Reviews', exact: true })).toBeVisible();
   await expect(page.locator('.category-orbit-grid article')).toHaveCount(6);
   await expect(page.locator('.category-orbit-details')).toHaveCount(6);
   await expect(page.locator('.collection-tabs')).toHaveCount(0);
   await expect(page.locator('.featured-grid article')).toHaveCount(Math.min(3, products.length));
+  await loadPageImages(page);
   await page.screenshot({ path: 'artifacts/home-desktop.png', fullPage: true });
 
   await page.getByRole('button', { name: /^Open basket/ }).click();
@@ -40,6 +56,7 @@ let browser;
   const categories = page.getByRole('navigation', { name: 'All sofa categories' });
   await expect(categories).toBeVisible();
   await expect(categories.getByRole('link')).toHaveCount(8);
+  await loadPageImages(page);
   await page.screenshot({ path: 'artifacts/product-desktop.png', fullPage: true });
 
   await page.goto(base, { waitUntil: 'networkidle' });
@@ -49,6 +66,7 @@ let browser;
     if (overflow > 1) throw new Error(`Home horizontal overflow: ${overflow}px at ${width}px`);
   }
   await page.setViewportSize({ width: 390, height: 844 });
+  await loadPageImages(page);
   await page.screenshot({ path: 'artifacts/home-mobile.png', fullPage: true });
 
   const broken = await page.locator('img').evaluateAll(images => images.filter(image => image.complete && !image.naturalWidth).map(image => image.src));
