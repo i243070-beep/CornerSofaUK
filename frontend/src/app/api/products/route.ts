@@ -26,9 +26,8 @@ export async function POST(request: NextRequest) {
     const product = await saveProduct(await request.json());
     return NextResponse.json({ success: true, product }, { status: 201 });
   } catch (error) {
-    if (error instanceof ProductValidationError || error instanceof SyntaxError) {
-      return NextResponse.json({ error: error instanceof SyntaxError ? 'Invalid product details.' : error.message }, { status: 400 });
-    }
+    if (error instanceof SyntaxError) return NextResponse.json({ error: 'Invalid product details.' }, { status: 400 });
+    if (error instanceof ProductValidationError) return NextResponse.json({ error: error.message }, { status: 400 });
     console.error('Error creating product:', error);
     return NextResponse.json({ error: 'Could not save product. If using PostgreSQL, check that the product colours and catalogue visibility migrations have been applied.' }, { status: 500 });
   }

@@ -8,9 +8,9 @@ async function loadPageImages(page) {
   await page.locator('img').evaluateAll(async images => {
     await Promise.all(images.map(image => {
       image.loading = 'eager';
-      if (image.complete) return;
+      if (image.complete) return image.decode().catch(() => {});
       return new Promise(resolve => {
-        image.addEventListener('load', resolve, { once: true });
+        image.addEventListener('load', () => image.decode().catch(() => {}).then(resolve), { once: true });
         image.addEventListener('error', resolve, { once: true });
       });
     }));
